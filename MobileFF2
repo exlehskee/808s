@@ -933,30 +933,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
-local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
-
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local isEnabled = true  -- Start with the UI element enabled
-
--- Assuming the "name" is a GUI element in CoreGui
-local guiElement = CoreGui:WaitForChild("name")
-
--- Function to toggle visibility
-local function toggleVisibility()
-    isEnabled = not isEnabled  -- Toggle the boolean value
-    guiElement.Enabled = isEnabled  -- Set the visibility based on the state
-end
-
--- Detect RightControl key press to toggle visibility
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    if Enum.KeyCode[keysus] and input.KeyCode == Enum.KeyCode[keysus] then
-        toggleVisibility()
-    end
-end)
-
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
@@ -1003,31 +979,6 @@ end
 applyDragSystem()
 
 SettingsTab:CreateLabel("Settings")
-SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
-    -- Capitalize the first letter of each word (preserves proper Enum.KeyCode formatting)
-    local formatted = v:gsub("^%l", string.upper):gsub("(%u)(%u+)", function(a, b)
-        return a .. b:lower()
-    end)
-
-    if Enum.KeyCode[formatted] then
-        keysus = formatted
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Keybind Updated",
-                Text = "New Keybind: " .. formatted,
-                Duration = 3
-            })
-        end)
-    else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Key",
-                Text = "Please enter a valid KeyCode (e.g. RightShift, G, LeftControl)",
-                Duration = 4
-            })
-        end)
-    end
-end)
 
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
