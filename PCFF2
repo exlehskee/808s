@@ -1,0 +1,918 @@
+local allowedPlaces = {
+    [8206123457] = true,
+    [8204899140] = true
+}
+
+if not allowedPlaces[game.PlaceId] then
+    game:GetServices("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+end
+
+-- Executor Check
+local function BadExecutors()
+    return string.match(getexecutorname(), "Solara")
+       or string.match(getexecutorname(), "Zorara")
+       or string.match(getexecutorname(), "Wind")
+       or string.match(getexecutorname(), "Celery")
+       or string.match(getexecutorname(), "Scythex")
+       or string.match(getexecutorname(), "Nezur")
+       or string.match(getexecutorname(), "Xeno")
+end
+
+local function GoodExecutors()
+    return not BadExecutors()
+end
+
+if not LPH_OBFUSCATED then
+    function LPH_JIT(Function) return Function end
+    function LPH_JIT_MAX(Function) return Function end
+    function LPH_NO_VIRTUALIZE(Function) return Function end
+end
+
+-- Anti-Cheat Bypass
+LPH_NO_VIRTUALIZE(function()
+    if hookmetamethod and not BadExecutors() then
+        if game.PlaceId ~= 8206123457 and game.PlaceId == 8204899140 then
+            local Players = game:GetService("Players")
+            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+            local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+            local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+            local ExpectedPath = LocalPlayer:GetFullName() .. ".PlayerScripts.PlayerScriptsLoader.PlayerModule.LocalScript"
+
+            if ReplicatedFirst:FindFirstChild("LocalScript") then
+                ReplicatedFirst:FindFirstChild("LocalScript"):Destroy()
+                print(ExpectedPath)
+            end
+
+            local GarbageCollection = getgc(true)
+            local Hooks = {}
+            local FunctionList = {}
+            local Handshake = nil
+
+            local Iterator = table.foreach
+
+            local function IsACItem(Function)
+                return debug.info(Function, "s") == ExpectedPath
+            end
+
+            local function ACLine(Function)
+                return debug.info(Function, "l")
+            end
+
+            Iterator(GarbageCollection, function(_, Item)
+                if type(Item) == "function" and IsACItem(Item) then
+                    table.insert(FunctionList, Item)
+                end
+            end)
+
+            Iterator(GarbageCollection, function(_, Function)
+                if type(Function) == "function" and IsACItem(Function) then
+                    local Line = ACLine(Function)
+                    if table.find({42, 51, 61}, Line) then
+                        hookfunction(Function, function() end)
+                    end
+                end
+            end)
+
+            Iterator(FunctionList, function(_, Function)
+                if type(Function) == "function" and debug.getinfo(Function).numparams == 7 then
+                    Handshake = Function
+                end
+            end)
+
+            task.wait()
+
+            Hooks.debug_info = hookfunction(debug.info, function(...)
+                local Args = {...}
+                if not checkcaller() and (Args[1] == 2) and (Args[2] == "s") then
+                    return "LocalScript"
+                end
+                return Hooks.debug_info(...)
+            end)
+
+            Hooks.__call = hookfunction(Handshake, function(...)
+                local Args = {...}
+                if Args[2] == 655 and Args[3] == 775 and Args[4] == 724 and Args[5] == 633 and Args[6] == 891 then
+                    return Hooks.__call(...)
+                elseif Args[2] == 760 and Args[3] == 760 and Args[4] == 771 and Args[5] == 665 and Args[6] == 898 then
+                    return Hooks.__call(...)
+                elseif Args[2] == 660 and Args[3] == 759 and Args[4] == 751 and Args[5] == 863 and Args[6] == 771 then
+                    return Hooks.__call(...)
+                end
+            end)
+        end
+        AC_BYPASS = true
+    end
+end)()
+
+if AC_BYPASS == true then
+    print("Celaris Injected")
+else
+    print("Celaris failed to bypass!")
+end
+
+
+
+local Player = game:GetService("Players").LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+
+local keysus = "RightControl"
+local Magnets = false
+local ShowHitbox = false
+local Range = 10
+local autoCatchEnabled = false
+local catchDelay = 0.01
+local maxAutoCatchDistance = 10 -- default value
+local autoSwatEnabled = false
+local swatDelay = 0.01
+local maxAutoSwatDistance = 10
+local autoQBEnabled = false
+local resetAfterCatchEnabled = false
+local resetAfterCatchDelay = 1
+local autoRushEnabled = false
+local autoRushDelay = 0.5
+local lowerGraphicsEnabled = false
+local originalMaterials = {}
+local stadiumOriginalCFrame = nil
+local ballTrailEnabled = false
+
+local noJumpCooldownEnabled = false
+local lastFakeJumpTime = 0
+local jumpCooldownWait = 0.3
+local jumpConnection
+
+local UseMagnetDelay = false
+local MagnetDelay = 0.01 -- Default value
+local HitboxColor = Color3.fromRGB(178, 178, 178) -- Default color
+local HitboxTransparency = 0.8 -- Default transparency
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+
+Player.CharacterAdded:Connect(function(char)
+    Character = char
+end)
+
+-- Walkspeed and No Move Restrictions Variable
+local walkSpeedEnabled = false
+local walkSpeedValue = 20  -- Default WalkSpeed
+local jumpPowerEnabled = false
+local jumpPowerValue = 50  -- Default JumpPower
+local noMoveRestrictions = false
+
+-- // Feature Toggles and Sliders
+local walkSpeedEnabled = false
+local walkSpeedValue = 20
+
+local jumpPowerEnabled = false
+local jumpPowerValue = 50
+
+local noMoveRestrictions = false
+local autoCaptainActive = false
+
+-- // Apply Settings Function
+local function applySettings()
+    local character = game:GetService("Players").LocalPlayer.Character
+    if character and character:FindFirstChild("Humanoid") then
+        local humanoid = character.Humanoid
+
+        -- WalkSpeed logic
+        if walkSpeedEnabled then
+            if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
+                -- Don't apply WalkSpeed while restricted
+                return
+            end
+            humanoid.WalkSpeed = walkSpeedValue
+        elseif noMoveRestrictions and humanoid.WalkSpeed == 0 then
+            humanoid.WalkSpeed = 20 -- Default speed fix when restricted but bypass is on
+        else
+            humanoid.WalkSpeed = 20
+        end
+
+        -- JumpPower logic
+        if jumpPowerEnabled then
+            humanoid.JumpPower = jumpPowerValue
+        else
+            humanoid.JumpPower = 50
+        end
+    end
+end
+
+local function setupNoJumpCooldown()
+    if jumpConnection then
+        jumpConnection:Disconnect()
+        jumpConnection = nil
+    end
+
+    if noJumpCooldownEnabled then
+        jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+            local character = game.Players.LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+            if not humanoid then return end
+
+            task.wait() -- wait a frame
+
+            if humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                local currentTime = tick()
+                if currentTime - lastFakeJumpTime >= jumpCooldownWait then
+                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                    lastFakeJumpTime = currentTime
+                end
+            end
+        end)
+    end
+end
+
+-- Function to find the player holding the football
+local function findFootballHolder()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("Football") then
+            return player
+        end
+    end
+    return nil
+end
+
+-- Function to predict movement (based on velocity)
+local function predictPosition(targetHrp, timeAhead)
+    local targetVelocity = targetHrp.Velocity
+    return targetHrp.Position + (targetVelocity * timeAhead)
+end
+
+-- The actual Auto Rush function
+local function autoRush(delay)
+    while autoRushEnabled do
+        local footballHolder = findFootballHolder()
+        if footballHolder then
+            local character = game.Players.LocalPlayer.Character
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            local targetHrp = footballHolder.Character and footballHolder.Character:FindFirstChild("HumanoidRootPart")
+
+            if hrp and targetHrp then
+                local predictedPosition = predictPosition(targetHrp, delay)
+                if predictedPosition.Magnitude > 0 then
+                    character.Humanoid:MoveTo(predictedPosition)
+                end
+            end
+        else
+            local character = game.Players.LocalPlayer.Character
+            if character and character:FindFirstChild("Humanoid") then
+                character.Humanoid:Move(Vector3.new(0, 0, 0), true)
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
+
+-- // Library
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/sdadas"))()
+local Main = Library:Create("Celaris", "Football Fusion")
+
+local CatchingTab = Main:CreateSection("Catching")
+local AutomaticsTab = Main:CreateSection("Automatics")
+local PlayersTab = Main:CreateSection("Player")
+local VisualsTab = Main:CreateSection("Visuals")
+local SettingsTab = Main:CreateSection("Settings")
+
+-- Catching Tab
+CatchingTab:CreateLabel("Catching")
+CatchingTab:CreateToggle("Ball Magnets", function(value)
+    Magnets = value
+end)
+
+CatchingTab:CreateToggle("Show Hitbox", function(value)
+    ShowHitbox = value
+end)
+
+CatchingTab:CreateSlider(7, 20, "Magnets Size", function(value)
+    Range = value
+    for _, v in workspace:GetChildren() do
+        if v.Name == "Football" and v:IsA("BasePart") then
+            local sphere = v:FindFirstChild("RangeSphere")
+            if sphere then
+                sphere.Size = Vector3.new(Range, Range, Range)
+            end
+        end
+    end
+end)
+
+CatchingTab:CreateToggle("Magnet Delay", function(value)
+    UseMagnetDelay = value
+end)
+
+CatchingTab:CreateTextBox("Delay Amount", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        MagnetDelay = num
+
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Magnet Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+CatchingTab:CreateLabel("Hitbox Settings")
+
+CatchingTab:CreateTextBox("Hitbox Color", "RGB CODE", function(v)
+    local r, g, b = v:match("(%d+),%s*(%d+),%s*(%d+)")
+    r, g, b = tonumber(r), tonumber(g), tonumber(b)
+
+    if r and g and b and r <= 255 and g <= 255 and b <= 255 then
+        HitboxColor = Color3.fromRGB(r, g, b)
+
+        -- Update all current spheres
+        for _, football in workspace:GetChildren() do
+            if football.Name == "Football" and football:IsA("BasePart") then
+                local sphere = football:FindFirstChild("RangeSphere")
+                if sphere then
+                    sphere.Color = HitboxColor
+                end
+            end
+        end
+
+        -- Notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Hitbox Color Updated",
+                Text = string.format("New Color: RGB(%d, %d, %d)", r, g, b),
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Input",
+                Text = "Please enter 3 numbers from 0-255 separated by commas",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+CatchingTab:CreateTextBox("Hitbox Transparency", "0 - 0.9", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0 and num <= 0.9 then
+        HitboxTransparency = num
+
+        -- Update all current spheres
+        for _, football in workspace:GetChildren() do
+            if football.Name == "Football" and football:IsA("BasePart") then
+                local sphere = football:FindFirstChild("RangeSphere")
+                if sphere then
+                    sphere.Transparency = ShowHitbox and HitboxTransparency or 1
+                end
+            end
+        end
+
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Transparency Updated",
+                Text = "New Transparency: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Input",
+                Text = "Enter a number between 0 and 0.9",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+
+-- // Automatics Tab
+
+AutomaticsTab:CreateLabel("Auto Catch")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoCatchEnabled = value 
+end)
+AutomaticsTab:CreateTextBox("Catch Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 3 then
+        catchDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto Catch Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 3",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+    maxAutoCatchDistance = value
+end)
+
+AutomaticsTab:CreateLabel("Auto Swat")
+
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoSwatEnabled = value 
+end)
+AutomaticsTab:CreateTextBox("Swat Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 3 then
+        swatDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto Swat Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 3",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+    maxAutoSwatDistance = value
+end)
+AutomaticsTab:CreateLabel("Reset After Catch")
+
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    resetAfterCatchEnabled = value 
+end)
+
+AutomaticsTab:CreateTextBox("RAC Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 2 then
+        catchDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "RAC Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 2",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+AutomaticsTab:CreateLabel("Auto QB")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoQBEnabled = value 
+end)
+
+AutomaticsTab:CreateLabel("Auto Rush")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoRushEnabled = value
+    if value then
+        spawn(function()
+            autoRush(autoRushDelay)
+        end)
+    end
+end)
+
+AutomaticsTab:CreateTextBox("Rush Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        autoRushDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto-Rush Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+
+-- Player Tab:
+
+PlayersTab:CreateLabel("Player")
+PlayersTab:CreateToggle("WalkSpeed", function(value)
+    walkSpeedEnabled = value
+end)
+
+PlayersTab:CreateSlider(20, 23, "JumpPower Amount", function(value)
+    walkSpeedValue = value
+end)
+
+PlayersTab:CreateToggle("JumpPower", function(value)
+    jumpPowerEnabled = value
+end)
+
+PlayersTab:CreateSlider(50, 60, "JumpPower Amount", function(value)
+    jumpPowerValue = value
+end)
+PlayersTab:CreateLabel("Miscellaneous")
+
+PlayersTab:CreateToggle("No Move Restrictions", function(value)
+    noMoveRestrictions = value
+end)
+
+PlayersTab:CreateToggle("No Jump Cooldown", function(value)
+    noJumpCooldownEnabled = value
+    setupNoJumpCooldown()
+end)
+
+
+
+-- VisualsTab
+
+VisualsTab:CreateLabel("Visuals")
+VisualsTab:CreateToggle("Better FPS", function(value)
+    lowerGraphicsEnabled = value
+    handleGraphics(Player.Character, value)
+end)
+
+VisualsTab:CreateToggle("Hide Stadium", function(value)
+    local stadium = workspace:FindFirstChild("Models").Stadium
+    if stadium and stadium:IsA("Model") then
+        if stadium.PrimaryPart then
+            if value then
+                if not stadiumOriginalCFrame then
+                    stadiumOriginalCFrame = stadium:GetPrimaryPartCFrame()
+                end
+                stadium:SetPrimaryPartCFrame(stadium.PrimaryPart.CFrame * CFrame.new(0, -500, 0))
+            else
+                if stadiumOriginalCFrame then
+                    stadium:SetPrimaryPartCFrame(stadiumOriginalCFrame)
+                end
+            end
+        end
+    end
+end)
+
+-- Source
+
+
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if autoCatchEnabled then
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+
+            if closest and closestDist <= maxAutoCatchDistance then
+                task.wait(catchDelay)
+
+                local targetKey = Enum.KeyCode.C
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, targetKey, false, game)
+                task.wait(0.1)
+                game:GetService("VirtualInputManager"):SendKeyEvent(false, targetKey, false, game)
+            end
+        end
+    end
+end)
+
+
+-- // Remove the sphere when the football disappears from the workspac
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if autoSwatEnabled then
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+
+            if closest and closestDist <= maxAutoSwatDistance then
+                task.wait(swatDelay)
+
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+            end
+        end
+    end
+end)
+
+local lastHadFootball = false
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+
+        if resetAfterCatchEnabled then
+            local char = Player.Character
+            if char and char:FindFirstChild("Football") and not lastHadFootball then
+                lastHadFootball = true
+                task.wait(resetAfterCatchDelay)
+
+                if char:FindFirstChild("Humanoid") then
+                    char.Humanoid.Health = 0
+                end
+            elseif char and not char:FindFirstChild("Football") then
+                lastHadFootball = false
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if autoQBEnabled then
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then continue end
+
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist <= 50 and dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+
+            if closest then
+                char.Humanoid:MoveTo(closest.Position)
+            end
+        end
+    end
+end)
+
+
+-- // Magnet loop
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if not Magnets then continue end
+        if not Character or not Character:FindFirstChild("CatchRight") or not Character:FindFirstChild("CatchLeft") then continue end
+
+        for _, v in workspace:GetChildren() do
+            if v.Name == "Football" and v:IsA("BasePart") and not v.Anchored and v.Parent == workspace then
+                -- Add sphere if missing
+                local sphere = v:FindFirstChild("RangeSphere")
+                if not sphere then
+                    sphere = Instance.new("Part")
+                    sphere.Name = "RangeSphere"
+                    sphere.Shape = Enum.PartType.Ball
+                    sphere.Size = Vector3.new(Range, Range, Range)
+                    sphere.Color = HitboxColor
+                    sphere.Transparency = ShowHitbox and HitboxTransparency or 1
+                    sphere.CanCollide = false
+                    sphere.Anchored = true
+                    sphere.Material = Enum.Material.Neon
+                    sphere.Position = v.Position
+                    sphere.Parent = v
+
+                    task.spawn(function()
+                        while sphere.Parent == v and v.Parent == workspace do
+                            task.wait()
+                            sphere.CFrame = v.CFrame
+                        end
+                    end)
+                end
+
+                -- Distance check
+                local distRight = (Character["CatchRight"].Position - sphere.Position).magnitude
+                local distLeft = (Character["CatchLeft"].Position - sphere.Position).magnitude
+
+                if distRight <= Range or distLeft <= Range then
+                    task.spawn(function()
+                        if UseMagnetDelay then
+                            task.wait(MagnetDelay)
+                        end
+                        firetouchinterest(Character["CatchRight"], v, 0)
+                        firetouchinterest(Character["CatchLeft"], v, 0)
+                        firetouchinterest(Character["CatchRight"], v, 1)
+                        firetouchinterest(Character["CatchLeft"], v, 1)
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+workspace.ChildRemoved:Connect(function(child)
+    if child.Name == "Football" and child:IsA("BasePart") then
+        local sphere = child:FindFirstChild("RangeSphere")
+        if sphere then
+            sphere:Destroy()
+        end
+    end
+end)
+
+
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
+        applySettings()
+    end
+end)
+
+function handleGraphics(char, low)
+    if not char then return end
+
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") then
+            if low then
+                -- Store original material if not already stored
+                if not originalMaterials[part] then
+                    originalMaterials[part] = part.Material
+                end
+                part.Material = Enum.Material.SmoothPlastic
+            else
+                -- Revert to original material if it was stored
+                if originalMaterials[part] then
+                    part.Material = originalMaterials[part]
+                end
+            end
+        end
+    end
+
+    -- If turning off, clear the material cache
+    if not low then
+        originalMaterials = {}
+    end
+end
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
+        applySettings()
+    end
+end)
+
+local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
+
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local isEnabled = true  -- Start with the UI element enabled
+
+-- Assuming the "name" is a GUI element in CoreGui
+local guiElement = CoreGui:WaitForChild("name")
+
+-- Function to toggle visibility
+local function toggleVisibility()
+    isEnabled = not isEnabled  -- Toggle the boolean value
+    guiElement.Enabled = isEnabled  -- Set the visibility based on the state
+end
+
+-- Detect RightControl key press to toggle visibility
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if Enum.KeyCode[keysus] and input.KeyCode == Enum.KeyCode[keysus] then
+        toggleVisibility()
+    end
+end)
+
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+-- Function to apply the drag system
+local function applyDragSystem()
+	wait(1) -- Delay so everything is loaded
+
+	for _, gui in pairs(CoreGui:GetChildren()) do
+		if gui:IsA("ScreenGui") and gui.Name == "name" then
+			local MainLib = gui:FindFirstChild("MainLib")
+			if MainLib then
+				local dragging = false
+				local dragStart, startPos
+
+				local function update(input)
+					local delta = input.Position - dragStart
+					MainLib.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+				end
+
+				MainLib.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+						dragging = true
+						dragStart = input.Position
+						startPos = MainLib.Position
+
+						input.Changed:Connect(function()
+							if input.UserInputState == Enum.UserInputState.End then
+								dragging = false
+							end
+						end)
+					end
+				end)
+
+				UserInputService.InputChanged:Connect(function(input)
+					if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+						update(input)
+					end
+				end)
+			end
+		end
+	end
+end
+
+applyDragSystem()
+
+SettingsTab:CreateLabel("Settings")
+SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
+    -- Capitalize the first letter of each word (preserves proper Enum.KeyCode formatting)
+    local formatted = v:gsub("^%l", string.upper):gsub("(%u)(%u+)", function(a, b)
+        return a .. b:lower()
+    end)
+
+    if Enum.KeyCode[formatted] then
+        keysus = formatted
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Keybind Updated",
+                Text = "New Keybind: " .. formatted,
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Key",
+                Text = "Please enter a valid KeyCode (e.g. RightShift, G, LeftControl)",
+                Duration = 4
+            })
+        end)
+    end
+end)
