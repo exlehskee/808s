@@ -4,7 +4,7 @@ local allowedPlaces = {
 }
 
 if not allowedPlaces[game.PlaceId] then
-    game:GetServices("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+    game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
 -- Executor Check
