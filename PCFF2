@@ -1,6 +1,7 @@
 local allowedPlaces = {
     [8206123457] = true,
-    [8204899140] = true
+    [8204899140] = true,
+    [17541256525] = true
 }
 
 if not allowedPlaces[game.PlaceId] then
@@ -133,9 +134,56 @@ local resetAfterCatchDelay = 1
 local autoRushEnabled = false
 local autoRushDelay = 0.5
 local lowerGraphicsEnabled = false
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local toggleBlockReach = false
+local blockReachAmount = 3 -- default slider value
+local originalSize = Vector3.new(0.8500000238418579, 5, 1.5)
+local blockPartName = "BlockPart"
+
+local function applyBlockReach()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local blockPart = char:FindFirstChild(blockPartName)
+	if blockPart and blockPart:IsA("BasePart") then
+		blockPart.Size = Vector3.new(2.5, originalSize.Y, originalSize.Z + blockReachAmount)
+	end
+end
+
+-- Function to reset block reach
+local function resetBlockReach()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local blockPart = char:FindFirstChild(blockPartName)
+	if blockPart and blockPart:IsA("BasePart") then
+		blockPart.Size = originalSize
+	end
+end
+
+-- Character reset handling (reset-proof feature)
+LocalPlayer.CharacterAdded:Connect(function()
+	if toggleBlockReach then
+		task.wait(1) -- wait for the character to fully load
+		applyBlockReach()
+	end
+end)
+
+
+
+local tackleReachEnabled = false
+
+local autoJumpEnabled = false
+local jumpDelay = 0.01
+local jumpMaxDistance = 10
+
 local originalMaterials = {}
 local stadiumOriginalCFrame = nil
 local ballTrailEnabled = false
+
+local pullEnabled = false
+local pullDistance = 10
+local pullDelayEnabled = false
+local pullDelayAmount = 0.1
+local lastPossessTime = 0
 
 local noJumpCooldownEnabled = false
 local lastFakeJumpTime = 0
@@ -161,15 +209,83 @@ local jumpPowerEnabled = false
 local jumpPowerValue = 50  -- Default JumpPower
 local noMoveRestrictions = false
 
+
 -- // Feature Toggles and Sliders
 local walkSpeedEnabled = false
 local walkSpeedValue = 20
+
+-- Variables
+local workspace = game:GetService("Workspace")
+local scrambleWall = workspace:WaitForChild("ScrambleWall") -- Assumes ScrambleWall exists in workspace
+local toggle = false
+local canCollideCheck = true -- Whether CanCollide should be checked
+
+-- Function to disable CanCollide
+local function disableCanCollide()
+    if scrambleWall and scrambleWall:IsA("BasePart") then
+        if scrambleWall.CanCollide then
+            scrambleWall.CanCollide = false
+        end
+    end
+end
+
+local rainWasInitiallyEnabled = false
+local snowWasInitiallyEnabled = false
+local rainSoundWasPlaying = false
 
 local jumpPowerEnabled = false
 local jumpPowerValue = 50
 
 local noMoveRestrictions = false
 local autoCaptainActive = false
+
+local function pullToFootball()
+    task.spawn(function()
+        while pullEnabled do
+            task.wait(0.1)
+
+            local character = Player.Character
+            if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+
+            local hasFootball = character:FindFirstChild("Football") ~= nil
+            if hasFootball then
+                lastPossessTime = tick()
+            elseif tick() - lastPossessTime < 1 then
+                continue -- wait 1 sec after losing football
+            end
+
+            local closestFootball
+            local shortestDistance = pullDistance
+
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name == "Football" then
+                    local possessed = false
+                    local current = obj.Parent
+                    while current do
+                        if current:FindFirstChild("Humanoid") then
+                            possessed = true
+                            break
+                        end
+                        current = current.Parent
+                    end
+
+                    if not possessed then
+                        local dist = (character.HumanoidRootPart.Position - obj.Position).Magnitude
+                        if dist < shortestDistance then
+                            shortestDistance = dist
+                            closestFootball = obj
+                        end
+                    end
+                end
+            end
+
+            if closestFootball then
+                if pullDelayEnabled then task.wait(pullDelayAmount) end
+                character:MoveTo(closestFootball.Position)
+            end
+        end
+    end)
+end
 
 -- // Apply Settings Function
 local function applySettings()
@@ -199,20 +315,24 @@ local function applySettings()
     end
 end
 
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
 local function setupNoJumpCooldown()
-    if jumpConnection then
+    if typeof(jumpConnection) == "RBXScriptConnection" then
         jumpConnection:Disconnect()
         jumpConnection = nil
     end
 
     if noJumpCooldownEnabled then
-        jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
-            local character = game.Players.LocalPlayer.Character
+        jumpConnection = UserInputService.JumpRequest:Connect(function()
+            local character = LocalPlayer.Character
             local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
 
             if not humanoid then return end
 
-            task.wait() -- wait a frame
+            task.wait()
 
             if humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
                 local currentTime = tick()
@@ -225,9 +345,10 @@ local function setupNoJumpCooldown()
     end
 end
 
+
 -- Function to find the player holding the football
 local function findFootballHolder()
-    for _, player in pairs(game.Players:GetPlayers()) do
+    for _, player in pairs(Players:GetPlayers()) do
         if player.Character and player.Character:FindFirstChild("Football") then
             return player
         end
@@ -235,18 +356,16 @@ local function findFootballHolder()
     return nil
 end
 
--- Function to predict movement (based on velocity)
 local function predictPosition(targetHrp, timeAhead)
     local targetVelocity = targetHrp.Velocity
     return targetHrp.Position + (targetVelocity * timeAhead)
 end
 
--- The actual Auto Rush function
 local function autoRush(delay)
     while autoRushEnabled do
         local footballHolder = findFootballHolder()
         if footballHolder then
-            local character = game.Players.LocalPlayer.Character
+            local character = LocalPlayer.Character
             local hrp = character and character:FindFirstChild("HumanoidRootPart")
             local targetHrp = footballHolder.Character and footballHolder.Character:FindFirstChild("HumanoidRootPart")
 
@@ -257,7 +376,7 @@ local function autoRush(delay)
                 end
             end
         else
-            local character = game.Players.LocalPlayer.Character
+            local character = LocalPlayer.Character
             if character and character:FindFirstChild("Humanoid") then
                 character.Humanoid:Move(Vector3.new(0, 0, 0), true)
             end
@@ -328,6 +447,46 @@ CatchingTab:CreateTextBox("Delay Amount", "Delay Number", function(v)
         end)
     end
 end)
+
+CatchingTab:CreateLabel("CFrame Pull")
+CatchingTab:CreateToggle("Enabled", function(value)
+    pullEnabled = value
+    if value then
+        pullToFootball()
+    end
+end)
+
+CatchingTab:CreateSlider(5, 15, "Pull Distance", function(value)
+    pullDistance = value
+end)
+
+CatchingTab:CreateToggle("Pull Delay", function(value)
+    pullDelayEnabled = value
+end)
+
+CatchingTab:CreateTextBox("Delay", "Delay (0.01 - 1)", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        pullDelayAmount = num
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Pull Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
 
 CatchingTab:CreateLabel("Hitbox Settings")
 
@@ -472,6 +631,41 @@ end)
 AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
     maxAutoSwatDistance = value
 end)
+
+AutomaticsTab:CreateLabel("Auto Jump")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoJumpEnabled = value 
+end)
+AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        jumpDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto Jump Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+    jumpMaxDistance = value
+end)
+
+
 AutomaticsTab:CreateLabel("Reset After Catch")
 
 AutomaticsTab:CreateToggle("Enabled", function(value)
@@ -562,6 +756,30 @@ end)
 PlayersTab:CreateSlider(50, 60, "JumpPower Amount", function(value)
     jumpPowerValue = value
 end)
+
+PlayersTab:CreateLabel("Defense")
+
+PlayersTab:CreateToggle("Tackle Reach", function(value)
+    tackleReachEnabled = value
+end)
+
+PlayersTab:CreateToggle("Block Reach", function(value)
+	toggleBlockReach = value
+	if toggleBlockReach then
+		applyBlockReach()
+	else
+		resetBlockReach()
+	end
+end)
+
+-- Slider
+PlayersTab:CreateSlider(3, 10, "Reach Amount", function(value)
+	blockReachAmount = value
+	if toggleBlockReach then
+		applyBlockReach()
+	end
+end)
+
 PlayersTab:CreateLabel("Miscellaneous")
 
 PlayersTab:CreateToggle("No Move Restrictions", function(value)
@@ -574,10 +792,9 @@ PlayersTab:CreateToggle("No Jump Cooldown", function(value)
 end)
 
 
-
 -- VisualsTab
 
-VisualsTab:CreateLabel("Visuals")
+VisualsTab:CreateLabel("Game Visuals")
 VisualsTab:CreateToggle("Better FPS", function(value)
     lowerGraphicsEnabled = value
     handleGraphics(Player.Character, value)
@@ -601,6 +818,70 @@ VisualsTab:CreateToggle("Hide Stadium", function(value)
     end
 end)
 
+VisualsTab:CreateLabel("Weather Visuals")
+VisualsTab:CreateToggle("Remove Rain", function(value)
+    local weather = workspace:FindFirstChild("SkyWeather")
+    local sounds = workspace:FindFirstChild("Sounds")
+
+    -- Handle Rain Particles
+    if weather and weather:IsA("BasePart") then
+        local rain = weather:FindFirstChild("Rain")
+        if rain and rain:IsA("ParticleEmitter") then
+            if value then
+                rainWasInitiallyEnabled = rain.Enabled
+                if rain.Enabled then
+                    rain.Enabled = false
+                end
+            else
+                if rainWasInitiallyEnabled then
+                    rain.Enabled = true
+                end
+            end
+        end
+    end
+
+    -- Handle Rain Sound
+    if sounds and sounds:FindFirstChild("Rain") then
+        local rainSound = sounds:FindFirstChild("Rain")
+        if value then
+            rainSoundWasPlaying = rainSound.IsPlaying
+            if rainSound:IsA("Sound") and rainSound.IsPlaying then
+                rainSound:Stop()
+            end
+        else
+            if rainSoundWasPlaying and rainSound:IsA("Sound") and not rainSound.IsPlaying then
+                rainSound:Play()
+            end
+        end
+    end
+end)
+
+VisualsTab:CreateToggle("Remove Snow", function(value)
+    local weather = workspace:FindFirstChild("SkyWeather")
+    if weather and weather:IsA("BasePart") then
+        local snow = weather:FindFirstChild("Snow")
+        if snow and snow:IsA("ParticleEmitter") then
+            if value then
+                -- Toggle ON: remove snow if it was enabled
+                snowWasInitiallyEnabled = snow.Enabled
+                if snow.Enabled then
+                    snow.Enabled = false
+                end
+            else
+                -- Toggle OFF: only re-enable if it was originally on
+                if snowWasInitiallyEnabled then
+                    snow.Enabled = true
+                end
+            end
+        end
+    end
+end)
+
+VisualsTab:CreateLabel("Miscellaneous")
+VisualsTab:CreateToggle("Remove QB Boundaries", function(value)
+    toggle = value
+    print("ScrambleWall CanCollide check: " .. (toggle and "ON" or "OFF"))
+end)
 -- Source
 
 
@@ -670,6 +951,39 @@ task.spawn(function()
     end
 end)
 
+-- // Remove the sphere when the football disappears from the workspac
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if autoJumpEnabled then
+            local char = Player.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+
+            if closest and closestDist <= jumpMaxDistance then
+                task.wait(jumpDelay)
+
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+            end
+        end
+    end
+end)
+
 local lastHadFootball = false
 
 task.spawn(function()
@@ -713,6 +1027,45 @@ task.spawn(function()
 
             if closest then
                 char.Humanoid:MoveTo(closest.Position)
+            end
+        end
+    end
+end)
+
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+
+        if not tackleReachEnabled then continue end
+
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local closest, closestDist = nil, math.huge
+
+        for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Football") then
+                local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+                if targetHRP then
+                    local dist = (hrp.Position - targetHRP.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = targetHRP
+                    end
+                end
+            end
+        end
+
+        if closest and closestDist <= 5 then
+            local originalPos = hrp.CFrame
+            for _ = 1, 5 do
+                hrp.CFrame = closest.CFrame
+                task.wait(0.01)
+                hrp.CFrame = originalPos
+                task.wait(0.01)
             end
         end
     end
@@ -772,6 +1125,12 @@ task.spawn(function()
     end
 end)
 
+game:GetService("RunService").Heartbeat:Connect(function()
+    if toggle and canCollideCheck then
+        disableCanCollide()
+    end
+end)
+
 workspace.ChildRemoved:Connect(function(child)
     if child.Name == "Football" and child:IsA("BasePart") then
         local sphere = child:FindFirstChild("RangeSphere")
@@ -820,6 +1179,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
         applySettings()
     end
 end)
+
 
 local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
 
