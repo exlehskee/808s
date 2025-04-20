@@ -1,6 +1,7 @@
 local allowedPlaces = {
     [8206123457] = true,
-    [8204899140] = true
+    [8204899140] = true,
+    [17541256525] = true
 }
 
 if not allowedPlaces[game.PlaceId] then
