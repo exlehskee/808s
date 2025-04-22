@@ -149,6 +149,13 @@ local pullDelayEnabled = false
 local pullDelayAmount = 0.1
 local lastPossessTime = 0
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local toggleBlockReach = false
+local blockReachAmount = 3 -- default slider value
+local originalSize = Vector3.new(0.8500000238418579, 5, 1.5)
+local blockPartName = "BlockPart"
+
 local noJumpCooldownEnabled = false
 local lastFakeJumpTime = 0
 local jumpCooldownWait = 0.3
@@ -177,6 +184,31 @@ local walkSpeedValue = 20  -- Default WalkSpeed
 local jumpPowerEnabled = false
 local jumpPowerValue = 50  -- Default JumpPower
 local noMoveRestrictions = false
+
+local function applyBlockReach()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local blockPart = char:FindFirstChild(blockPartName)
+	if blockPart and blockPart:IsA("BasePart") then
+		blockPart.Size = Vector3.new(2.5, originalSize.Y, originalSize.Z + blockReachAmount)
+	end
+end
+
+-- Function to reset block reach
+local function resetBlockReach()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	local blockPart = char:FindFirstChild(blockPartName)
+	if blockPart and blockPart:IsA("BasePart") then
+		blockPart.Size = originalSize
+	end
+end
+
+-- Character reset handling (reset-proof feature)
+LocalPlayer.CharacterAdded:Connect(function()
+	if toggleBlockReach then
+		task.wait(1) -- wait for the character to fully load
+		applyBlockReach()
+	end
+end)
 
 local workspace = game:GetService("Workspace")
 local scrambleWall = workspace:WaitForChild("ScrambleWall") -- Assumes ScrambleWall exists in workspace
