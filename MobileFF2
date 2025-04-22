@@ -138,10 +138,26 @@ local originalMaterials = {}
 local stadiumOriginalCFrame = nil
 local ballTrailEnabled = false
 
+local tackleReachEnabled = false
+local autoJumpEnabled = false
+local jumpDelay = 0.01
+local jumpMaxDistance = 10
+
+local pullEnabled = false
+local pullDistance = 10
+local pullDelayEnabled = false
+local pullDelayAmount = 0.1
+local lastPossessTime = 0
+
 local noJumpCooldownEnabled = false
 local lastFakeJumpTime = 0
 local jumpCooldownWait = 0.3
 local jumpConnection
+
+
+local rainWasInitiallyEnabled = false
+local snowWasInitiallyEnabled = false
+local rainSoundWasPlaying = false
 
 local UseMagnetDelay = false
 local MagnetDelay = 0.01 -- Default value
@@ -162,6 +178,20 @@ local jumpPowerEnabled = false
 local jumpPowerValue = 50  -- Default JumpPower
 local noMoveRestrictions = false
 
+local workspace = game:GetService("Workspace")
+local scrambleWall = workspace:WaitForChild("ScrambleWall") -- Assumes ScrambleWall exists in workspace
+local toggle = false
+local canCollideCheck = true -- Whether CanCollide should be checked
+
+-- Function to disable CanCollide
+local function disableCanCollide()
+    if scrambleWall and scrambleWall:IsA("BasePart") then
+        if scrambleWall.CanCollide then
+            scrambleWall.CanCollide = false
+        end
+    end
+end
+
 -- // Feature Toggles and Sliders
 local walkSpeedEnabled = false
 local walkSpeedValue = 20
@@ -171,6 +201,56 @@ local jumpPowerValue = 50
 
 local noMoveRestrictions = false
 local autoCaptainActive = false
+
+-- // CFrame Pull Function
+
+local function pullToFootball()
+    task.spawn(function()
+        while pullEnabled do
+            task.wait(0.1)
+
+            local character = Player.Character
+            if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+
+            local hasFootball = character:FindFirstChild("Football") ~= nil
+            if hasFootball then
+                lastPossessTime = tick()
+            elseif tick() - lastPossessTime < 1 then
+                continue -- wait 1 sec after losing football
+            end
+
+            local closestFootball
+            local shortestDistance = pullDistance
+
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name == "Football" then
+                    local possessed = false
+                    local current = obj.Parent
+                    while current do
+                        if current:FindFirstChild("Humanoid") then
+                            possessed = true
+                            break
+                        end
+                        current = current.Parent
+                    end
+
+                    if not possessed then
+                        local dist = (character.HumanoidRootPart.Position - obj.Position).Magnitude
+                        if dist < shortestDistance then
+                            shortestDistance = dist
+                            closestFootball = obj
+                        end
+                    end
+                end
+            end
+
+            if closestFootball then
+                if pullDelayEnabled then task.wait(pullDelayAmount) end
+                character:MoveTo(closestFootball.Position)
+            end
+        end
+    end)
+end
 
 -- // Apply Settings Function
 local function applySettings()
@@ -200,28 +280,30 @@ local function applySettings()
     end
 end
 
+local jumpCooldownActive = false
+
 local function setupNoJumpCooldown()
-    if jumpConnection then
+    if typeof(jumpConnection) == "RBXScriptConnection" then
         jumpConnection:Disconnect()
         jumpConnection = nil
     end
 
     if noJumpCooldownEnabled then
-        local Player = game:GetService("Players")
-        jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
-            local character = Player.LocalPlayer.Character
+        jumpConnection = UserInputService.JumpRequest:Connect(function()
+            local character = LocalPlayer.Character
             local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-
             if not humanoid then return end
 
-            task.wait() -- wait a frame
+            task.wait() -- Give the game a frame to register legit jumps
 
-            if humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
-                local currentTime = tick()
-                if currentTime - lastFakeJumpTime >= jumpCooldownWait then
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                    lastFakeJumpTime = currentTime
-                end
+            if not jumpCooldownActive and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                jumpCooldownActive = true
+                lastFakeJumpTime = tick()
+
+                task.delay(jumpCooldownWait, function()
+                    jumpCooldownActive = false
+                end)
             end
         end)
     end
@@ -229,7 +311,7 @@ end
 
 -- Function to find the player holding the football
 local function findFootballHolder()
-    for _, player in pairs(game.Players:GetPlayers()) do
+    for _, player in pairs(Players:GetPlayers()) do
         if player.Character and player.Character:FindFirstChild("Football") then
             return player
         end
@@ -237,18 +319,16 @@ local function findFootballHolder()
     return nil
 end
 
--- Function to predict movement (based on velocity)
 local function predictPosition(targetHrp, timeAhead)
     local targetVelocity = targetHrp.Velocity
     return targetHrp.Position + (targetVelocity * timeAhead)
 end
 
--- The actual Auto Rush function
 local function autoRush(delay)
     while autoRushEnabled do
         local footballHolder = findFootballHolder()
         if footballHolder then
-            local character = game.Players.LocalPlayer.Character
+            local character = LocalPlayer.Character
             local hrp = character and character:FindFirstChild("HumanoidRootPart")
             local targetHrp = footballHolder.Character and footballHolder.Character:FindFirstChild("HumanoidRootPart")
 
@@ -259,7 +339,7 @@ local function autoRush(delay)
                 end
             end
         else
-            local character = game.Players.LocalPlayer.Character
+            local character = LocalPlayer.Character
             if character and character:FindFirstChild("Humanoid") then
                 character.Humanoid:Move(Vector3.new(0, 0, 0), true)
             end
@@ -289,10 +369,10 @@ CatchingTab:CreateToggle("Show Hitbox", function(value)
     ShowHitbox = value
 end)
 
-CatchingTab:CreateTextBox("Magnets Size", "Size (7-20)", function(v)
+CatchingTab:CreateTextBox("Magnets Size", "Size (5-20)", function(v)
     local num = tonumber(v)
 
-    if num and num >= 7 and num <= 20 then
+    if num and num >= 5 and num <= 20 then
         Range = num
 
         -- Update sphere sizes
@@ -315,7 +395,7 @@ CatchingTab:CreateTextBox("Magnets Size", "Size (7-20)", function(v)
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Size",
-                Text = "Enter a number from 7 to 20",
+                Text = "Enter a number from 5 to 20",
                 Duration = 3
             })
         end)
@@ -342,6 +422,67 @@ CatchingTab:CreateTextBox("Delay Amount", "Delay (0.01 - 1)", function(v)
         end)
     else
         -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+CatchingTab:CreateLabel("CFrame Pull")
+CatchingTab:CreateToggle("Enabled", function(value)
+    pullEnabled = value
+    if value then
+        pullToFootball()
+    end
+end)
+
+CatchingTab:CreateTextBox("Pull Distance", "5 - 15", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 5 and num <= 15 then
+        pullDistance = num
+
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Pull Distance Updated",
+                Text = "New Distance: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Distance",
+                Text = "Enter a number from 5 to 15",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+CatchingTab:CreateToggle("Pull Delay", function(value)
+    pullDelayEnabled = value
+end)
+
+CatchingTab:CreateTextBox("Delay", "Delay (0.01 - 1)", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        pullDelayAmount = num
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Pull Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Delay",
@@ -540,6 +681,60 @@ AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-30)", function(v)
     end
 end)
 
+AutomaticsTab:CreateLabel("Auto Jump")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    autoJumpEnabled = value 
+end)
+AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 0.01 and num <= 1 then
+        jumpDelay = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Auto Jump Delay Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 0.01 to 1",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
+    local num = tonumber(v)
+
+    if num and num >= 10 and num <= 30 then
+        jumpMaxDistance = num
+        -- Success notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Jump Max Distance Updated",
+                Text = "New Delay: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        -- Error notification
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Delay",
+                Text = "Enter a number from 10 to 30",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
 AutomaticsTab:CreateLabel("Reset After Catch")
 
 AutomaticsTab:CreateToggle("Enabled", function(value)
@@ -675,6 +870,52 @@ PlayersTab:CreateTextBox("JumpPower Amount", "Amount (50-60)", function(v)
     end
 end)
 
+PlayersTab:CreateLabel("Defense")
+
+PlayersTab:CreateToggle("Tackle Reach", function(value)
+    tackleReachEnabled = value
+end)
+
+PlayersTab:CreateToggle("Block Reach", function(value)
+	toggleBlockReach = value
+	if toggleBlockReach then
+		applyBlockReach()
+	else
+		resetBlockReach()
+	end
+end)
+
+PlayersTab:CreateTextBox("Reach Amount", "3 - 10", function(v)
+	local num = tonumber(v)
+
+	if num and num >= 3 and num <= 10 then
+		blockReachAmount = num
+
+		-- Apply instantly if toggle is on
+		if toggleBlockReach then
+			applyBlockReach()
+		end
+
+		-- Success notification
+		pcall(function()
+			game:GetService("StarterGui"):SetCore("SendNotification", {
+				Title = "Reach Amount Updated",
+				Text = "New Amount: " .. num,
+				Duration = 3
+			})
+		end)
+	else
+		-- Error notification
+		pcall(function()
+			game:GetService("StarterGui"):SetCore("SendNotification", {
+				Title = "Invalid Amount",
+				Text = "Enter a number from 3 to 10",
+				Duration = 3
+			})
+		end)
+	end
+end)
+
 PlayersTab:CreateLabel("Miscellaneous")
 
 PlayersTab:CreateToggle("No Move Restrictions", function(value)
@@ -712,6 +953,82 @@ VisualsTab:CreateToggle("Hide Stadium", function(value)
             end
         end
     end
+end)
+
+VisualsTab:CreateLabel("Weather Visuals")
+VisualsTab:CreateToggle("Remove Rain", function(value)
+    local weather = workspace:FindFirstChild("SkyWeather")
+    local sounds = workspace:FindFirstChild("Sounds")
+
+    -- Handle Rain Particles
+    if weather and weather:IsA("BasePart") then
+        local rain = weather:FindFirstChild("Rain")
+        if rain and rain:IsA("ParticleEmitter") then
+            if value then
+                rainWasInitiallyEnabled = rain.Enabled
+                if rain.Enabled then
+                    rain.Enabled = false
+                end
+            else
+                if rainWasInitiallyEnabled then
+                    rain.Enabled = true
+                end
+            end
+        end
+    end
+
+    -- Handle Rain Sound
+    if sounds and sounds:FindFirstChild("Rain") then
+        local rainSound = sounds:FindFirstChild("Rain")
+        if value then
+            rainSoundWasPlaying = rainSound.IsPlaying
+            if rainSound:IsA("Sound") and rainSound.IsPlaying then
+                rainSound:Stop()
+            end
+        else
+            if rainSoundWasPlaying and rainSound:IsA("Sound") and not rainSound.IsPlaying then
+                rainSound:Play()
+            end
+        end
+    end
+end)
+
+local snowStates = {} -- Table to track original states
+
+VisualsTab:CreateToggle("Remove Snow", function(value)
+    local weather = workspace:FindFirstChild("SkyWeather")
+    if not weather or not weather:IsA("BasePart") then return end
+
+    -- Get all descendants named "Snow" that are ParticleEmitters
+    local snowEmitters = {}
+    for _, descendant in ipairs(weather:GetDescendants()) do
+        if descendant:IsA("ParticleEmitter") and descendant.Name == "Snow" then
+            table.insert(snowEmitters, descendant)
+        end
+    end
+
+    if value then
+        -- Toggle ON: Store state & disable active ones
+        snowStates = {}
+        for _, snow in ipairs(snowEmitters) do
+            snowStates[snow] = snow.Enabled
+            if snow.Enabled then
+                snow.Enabled = false
+            end
+        end
+    else
+        -- Toggle OFF: Re-enable only those that were originally enabled
+        for snow, wasEnabled in pairs(snowStates) do
+            if snow and snow:IsDescendantOf(workspace) and wasEnabled then
+                snow.Enabled = true
+            end
+        end
+    end
+end)
+
+VisualsTab:CreateLabel("Miscellaneous")
+VisualsTab:CreateToggle("Remove QB Boundaries", function(value)
+    toggle = value
 end)
 
 -- Source
@@ -831,6 +1148,43 @@ task.spawn(function()
     end
 end)
 
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+
+        if not tackleReachEnabled then continue end
+
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local closest, closestDist = nil, math.huge
+
+        for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
+            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Football") then
+                local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+                if targetHRP then
+                    local dist = (hrp.Position - targetHRP.Position).Magnitude
+                    if dist < closestDist then
+                        closestDist = dist
+                        closest = targetHRP
+                    end
+                end
+            end
+        end
+
+        if closest and closestDist <= 5 then
+            local originalPos = hrp.CFrame
+            for _ = 1, 5 do
+                hrp.CFrame = closest.CFrame
+                task.wait(0.01)
+                hrp.CFrame = originalPos
+                task.wait(0.01)
+            end
+        end
+    end
+end)
 
 -- // Magnet loop
 task.spawn(function()
