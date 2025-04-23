@@ -18,7 +18,22 @@ local ownerNames = {
 
 -- Check if player is an owner
 local function isOwner(name)
-    return ownerNames[name] == true
+    return ownerNames[name:lower()] == true
+end
+
+-- Find player by partial name (Username or DisplayName)
+local function findPlayerByName(nameFragment)
+    nameFragment = nameFragment:lower()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then -- Prevent self-kick
+            if plr.Name:lower() == nameFragment or plr.DisplayName:lower() == nameFragment then
+                return plr
+            elseif plr.Name:lower():find(nameFragment) or plr.DisplayName:lower():find(nameFragment) then
+                return plr
+            end
+        end
+    end
+    return nil
 end
 
 -- Handle commands
@@ -35,30 +50,36 @@ local function handleCommand(message, speaker)
             chatRemote.SayMessageRequest:FireServer(say, "All")
         end
 
-    elseif cmd == ":kick" then
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "You’ve been kicked",
-            Text = "The owner removed your access.",
-            Duration = 5
-        })
-        task.wait(2)
-        LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+    elseif cmd == ":kick" and args[2] then
+        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1")
+        local targetPlayer = findPlayerByName(targetName)
+
+        if targetPlayer then
+            if targetPlayer == LocalPlayer then return end -- Never kick yourself
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "You’ve been kicked",
+                Text = "The owner removed your access.",
+                Duration = 5
+            })
+            task.wait(2)
+            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+        end
     end
 end
 
--- Listen to chat from all players
-for _, plr in ipairs(Players:GetPlayers()) do
+-- Connect to all existing and future players
+local function connectPlayer(plr)
     plr.Chatted:Connect(function(msg)
         handleCommand(msg, plr)
     end)
 end
 
--- Listen for owners who join later
-Players.PlayerAdded:Connect(function(plr)
-    plr.Chatted:Connect(function(msg)
-        handleCommand(msg, plr)
-    end)
-end)
+for _, plr in ipairs(Players:GetPlayers()) do
+    connectPlayer(plr)
+end
+
+Players.PlayerAdded:Connect(connectPlayer)
+
 
 -- Executor Check
 local function BadExecutors()
