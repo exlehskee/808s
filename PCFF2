@@ -18,6 +18,7 @@ local ownerNames = {
     ["x8lx8x"] = true,
     ["xleskyy"] = true,
     ["jkux"] = true, -- zippersman
+    ["R0cketLucky2020"] = true
 }
 
 -- Check if player is an owner
