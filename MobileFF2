@@ -13,7 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["R0cketLucky2020"] = true,
+    ["r0cketlucky2020"] = true,
     ["xleskyy"] = true
 }
 
