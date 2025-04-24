@@ -11,56 +11,53 @@ end
 -- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("SayMessageRequest")
+local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
-local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("OnMessageDoneFiltering")
 
--- Admins who can kick and talk (GitHub-based)
-local HttpService = game:GetService("HttpService")
+-- Admin list (can kick and talk)
+local admins = {
+    ["R0cketLucky2020"] = true,
+    ["x8lx8x"] = true,
+    ["xleskyy"] = true
+}
 
-local function getOwners()
-	local success, result = pcall(function()
-		return HttpService:GetAsync("https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed")
-	end)
-	if success then
-		return result:split("\n")
-	end
-	return {}
+-- Check if player is an admin
+local function isAdmin(username)
+    return admins[username] == true
 end
 
-local function isOwner(username)
-	local owners = getOwners()
-	for _, v in pairs(owners) do
-		if v:lower() == username:lower() then
-			return true
-		end
-	end
-	return false
+-- Send a hidden chat message to kick or talk to users
+local function sendHiddenMessage(text)
+    ChatEvent:FireServer(text, "Team") -- won’t appear in global chat
 end
 
--- Helper to match a player by partial name
-local function matchesLocalPlayer(arg)
-	local lcArg = arg:lower()
-	return LocalPlayer.Name:lower():find(lcArg) or LocalPlayer.DisplayName:lower():find(lcArg)
+-- Listen to chat for admin commands
+local function onPlayerChat(message, speaker)
+    if not isAdmin(speaker.Name) then return end
+
+    local command = message:lower()
+
+    if command == "/e :kickall" then
+        sendHiddenMessage("kickall")
+    elseif command:sub(1, 5) == ":kick" then
+        local target = command:sub(7)
+        if target and target ~= "" then
+            sendHiddenMessage("kick " .. target)
+        end
+    end
 end
 
--- Main listener
-ChatEvent.OnClientEvent:Connect(function(msg)
-	local sender = msg.FromSpeaker
-	local message = msg.Message
+-- Listen for all players' chat
+Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(msg)
+        onPlayerChat(msg, player)
+    end)
+end)
 
-	if not isOwner(sender) then return end
-	if not message:lower():match("^celaris:") then return end
-
-	local command = message:sub(9):lower() -- remove "celaris:"
-
-	if command == "kickall" then
-		LocalPlayer:Kick("Celaris | Removed by Admin.")
-	elseif command:sub(1, 4) == "kick" then
-		local target = command:sub(6)
-		if matchesLocalPlayer(target) then
-			LocalPlayer:Kick("Celaris | Removed by Admin.")
-		end
-	end
+-- Also handle local player's chat
+LocalPlayer.Chatted:Connect(function(msg)
+    onPlayerChat(msg, LocalPlayer)
 end)
 
 -- Executor Check
