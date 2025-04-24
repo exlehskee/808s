@@ -17,7 +17,6 @@ local LocalPlayer = Players.LocalPlayer
 local ownerNames = {
     ["x8lx8x"] = true,
     ["xleskyy"] = true,
-    ["R0cketLucky2020"] = true,
     ["jkux"] = true, -- zippersman
 }
 
