@@ -14,7 +14,7 @@ local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["r0cketlucky2020"] = true,
+    ["R0cketLucky2020"] = true,
     ["xleskyy"] = true
 }
 
@@ -90,6 +90,7 @@ local function handleCommand(message, speaker)
             local localHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             
             if targetHRP and localHRP then
+                -- Move the target player to the executor's position (adjust position in front)
                 targetHRP.CFrame = localHRP.CFrame * CFrame.new(0, 0, -4) -- Adjust -4 for positioning in front of the player
                 StarterGui:SetCore("SendNotification", {
                     Title = "Player Brought",
@@ -121,8 +122,6 @@ end
 
 -- Connect future players
 Players.PlayerAdded:Connect(connectPlayer)
-
-
 
 -- Executor Check
 local function BadExecutors()
