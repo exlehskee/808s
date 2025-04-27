@@ -236,10 +236,19 @@ local originalMaterials = {}
 local stadiumOriginalCFrame = nil
 local ballTrailEnabled = false
 
+local angleEnhancerEnabled = false
+local angleJumpBoosted = false
+local angleBoostAmount = 5
+local previousJumpPower = 0
+local mobileAngleBtn -- reference to the UI button
+
+
 local tackleReachEnabled = false
 local autoJumpEnabled = false
 local jumpDelay = 0.01
 local jumpMaxDistance = 10
+
+local noRagdollEnabled = false
 
 local pullEnabled = false
 local pullDistance = 10
@@ -257,10 +266,8 @@ local blockPartName = "BlockPart"
 -- // Angle Enhancer
 local angleEnhancerEnabled = false
 local angleBoostAmount = 5
-local angleHoldTime = 1.5
 local angleJumpBoosted = false
-local sHeldTime = 0
-local previousJumpPower = 50 -- This will get overwritten once you activate
+local previousJumpPower = 50
 
 local rainWasInitiallyEnabled = false
 local snowWasInitiallyEnabled = false
@@ -401,26 +408,30 @@ local function applySettings()
         local humanoid = character.Humanoid
 
         -- WalkSpeed logic
-        if walkSpeedEnabled then
-            if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
-                -- Don't apply WalkSpeed while restricted
-                return
-            end
-            humanoid.WalkSpeed = walkSpeedValue
-        elseif noMoveRestrictions and humanoid.WalkSpeed == 0 then
-            humanoid.WalkSpeed = 20 -- Default speed fix when restricted but bypass is on
-        else
-            humanoid.WalkSpeed = 20
-        end
+-- WalkSpeed logic
+if walkSpeedEnabled then
+    if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
+        return
+    end
+    humanoid.WalkSpeed = walkSpeedValue
+elseif noMoveRestrictions and humanoid.WalkSpeed == 0 then
+    humanoid.WalkSpeed = 20
+else
+    humanoid.WalkSpeed = 20
+end
 
-        -- JumpPower logic
-        if jumpPowerEnabled then
-            humanoid.JumpPower = jumpPowerValue
-        else
-            humanoid.JumpPower = 50
-        end
+if jumpPowerEnabled then
+    if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
+        -- If you're frozen and no bypass, don't apply JumpPower
+        return
+    end
+    humanoid.JumpPower = jumpPowerValue
+else
+    humanoid.JumpPower = 50
+end
     end
 end
+
 
 -- Function to find the player holding the football
 local function findFootballHolder()
@@ -825,7 +836,7 @@ AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
     end
 end)
 
-AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
+AutomaticsTab:CreateTextBox("Jump Max Distance", "Max Dist. Number", function(v)
     local num = tonumber(v)
 
     if num and num >= 10 and num <= 50 then
@@ -848,6 +859,11 @@ AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
             })
         end)
     end
+end)
+
+AutomaticsTab:CreateLabel("Auto Get Up")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    noRagdollEnabled = value
 end)
 
 AutomaticsTab:CreateLabel("Reset After Catch")
@@ -985,58 +1001,90 @@ PlayersTab:CreateTextBox("JumpPower Amount", "Amount (50-60)", function(v)
     end
 end)
 
-local function updateAngleEnhancer()
-    if not angleEnhancerEnabled then return end
+local button
+local function createAngleButton()
+    -- Destroy if already exists
+    if button then button:Destroy() end
 
-    local char = Player.Character
-    if not char then return end
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AngleEnhancerUI"
+    screenGui.IgnoreGuiInset = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = game:GetService("CoreGui")
 
-    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-    if not humanoid then return end
+    -- Create button
+    button = Instance.new("TextButton")
+    button.Name = "AngleButton"
+    button.Size = UDim2.new(0, 90, 0, 35)
+    button.Position = UDim2.new(0, 10, 1, -60)
+    button.AnchorPoint = Vector2.new(0, 1)
+    button.TextScaled = true
+    button.Font = Enum.Font.GothamBold
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    button.Text = "Activate"
+    button.ZIndex = 9999
 
-    local currentTime = tick()
+    -- ✅ Make draggable
+    button.Active = true
+    button.Draggable = true
 
-    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-        if sHeldTime == 0 then
-            sHeldTime = currentTime
-        elseif currentTime - sHeldTime >= angleHoldTime and not angleJumpBoosted then
+    -- Round corners
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.Parent = button
+
+    -- Parent to screenGui
+    button.Parent = screenGui
+
+    -- Click logic
+    button.MouseButton1Click:Connect(function()
+        local char = Player.Character
+        if not char then return end
+
+        local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+        if not humanoid then return end
+
+        if angleJumpBoosted then
+            -- Deactivate
+            humanoid.JumpPower = previousJumpPower
+            angleJumpBoosted = false
+            button.Text = "Activate"
+        else
+            -- Activate
             previousJumpPower = humanoid.JumpPower
             humanoid.JumpPower = previousJumpPower + angleBoostAmount
             angleJumpBoosted = true
+            button.Text = "Deactivate"
         end
-    else
-        if angleJumpBoosted then
-            humanoid.JumpPower = previousJumpPower
-        end
-        angleJumpBoosted = false
-        sHeldTime = 0
-    end
+    end)
 end
 
 PlayersTab:CreateLabel("Angle Enhancer")
 PlayersTab:CreateToggle("Enabled", function(value)
     angleEnhancerEnabled = value
 
-    if not value and angleJumpBoosted then
-        local char = Player.Character
-        if char then
-            local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-            if humanoid then
-                humanoid.JumpPower = previousJumpPower
-            end
-        end
-        angleJumpBoosted = false
-        sHeldTime = 0
-    end
-
     if value then
+        createAngleButton()
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Angle Enhancer",
-                Text = "If JumpPower is enabled you should probably turn it off so you're not blatant.",
+                Text = "If JumpPower is enabled, turn it off to avoid stacking.",
                 Duration = 4
             })
         end)
+    else
+        if button then button:Destroy() end
+
+        -- Reset JumpPower if needed
+        if angleJumpBoosted then
+            local char = Player.Character
+            local humanoid = char and char:FindFirstChildWhichIsA("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = previousJumpPower
+            end
+            angleJumpBoosted = false
+        end
     end
 end)
 
@@ -1056,28 +1104,6 @@ PlayersTab:CreateTextBox("Angle Boost", "Enter a number from 1 to 10", function(
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid Value",
                 Text = "Enter a number between 1 and 10",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-PlayersTab:CreateTextBox("Hold-Time", "Enter a number from 1 to 3", function(v)
-    local num = tonumber(v)
-    if num and num >= 1 and num <= 3 then
-        angleHoldTime = num
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Hold-Time Updated",
-                Text = "New Hold-Time: " .. num .. "s",
-                Duration = 3
-            })
-        end)
-    else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Value",
-                Text = "Enter a number between 1 and 3",
                 Duration = 3
             })
         end)
@@ -1459,11 +1485,40 @@ workspace.ChildRemoved:Connect(function(child)
     end
 end)
 
-
-
 game:GetService("RunService").Heartbeat:Connect(function()
     if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
         applySettings()
+    end
+end)
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if angleEnhancerEnabled and angleJumpBoosted then
+        local char = Player.Character
+        if char then
+            local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+            if humanoid and humanoid.JumpPower ~= previousJumpPower + angleBoostAmount then
+                humanoid.JumpPower = previousJumpPower + angleBoostAmount
+            end
+        end
+    end
+end)
+
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+
+        if noRagdollEnabled then
+            local character = game:GetService("Players").LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+            if humanoid and humanoid.PlatformStand then
+                task.wait(0.35)
+                if noRagdollEnabled and humanoid.PlatformStand then
+                    humanoid.PlatformStand = false
+                end
+            end
+        end
     end
 end)
 
