@@ -1,0 +1,170 @@
+-- // Celaris BBL PC
+
+local allowedPlaces = {
+    [14386691987] = true,
+    [14259168147] = true
+}
+
+if not allowedPlaces[game.PlaceId] then
+    game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+end
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/sdadas"))()
+local Main = Library:Create("Celaris", "Basketball Legends")
+
+local player = game.Players.LocalPlayer
+local bar = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shooting"):WaitForChild("Bar")
+local shootingUI = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shooting")
+
+local autoGreenEnabled = false
+local autoGreenPercentage = 10
+
+local autoGuardEnabled = false
+
+local ShootingTab = Main:CreateSection("Shooting")
+local PlayerTab = Main:CreateSection("Player")
+local SettingsTab = Main:CreateSection("Settings")
+
+-- // Shooting Tab
+ShootingTab:CreateLabel("Auto Green")
+ShootingTab:CreateToggle("Enabled", function(value)
+    autoGreenEnabled = value
+end)
+
+ShootingTab:CreateSlider(1, 10, "Auto Green Percentage", function(value) 
+    autoGreenPercentage = value 
+end)
+
+-- // Players Tab
+PlayersTab:CreateLabel("Auto Guard")
+PlayersTab:CreateToggle("Enabled", function(value)
+    autoGuardEnabled = value
+end)
+
+-- // Source
+
+-- // Auto Green Logic
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if shootingUI.Visible and autoGreenEnabled then
+            local newY = 0.90 + ((autoGreenPercentage - 1) * 0.01)
+            bar.Size = UDim2.new(1, 0, newY, 0)
+        end
+    end
+end)
+
+task.spawn(function()
+    while active do
+        if toggled and autoGuardEnabled then
+            local lockedPlayer = findClosestPlayerWithBall()
+            if lockedPlayer then
+                local targetPosition = lockedPlayer.Character.HumanoidRootPart.Position + (lockedPlayer.Character.HumanoidRootPart.CFrame.LookVector * -4)
+                local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid:MoveTo(targetPosition)
+                end
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- // UI
+
+local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
+
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local isEnabled = true  -- Start with the UI element enabled
+
+-- Assuming the "name" is a GUI element in CoreGui
+local guiElement = CoreGui:WaitForChild("name")
+
+-- Function to toggle visibility
+local function toggleVisibility()
+    isEnabled = not isEnabled  -- Toggle the boolean value
+    guiElement.Enabled = isEnabled  -- Set the visibility based on the state
+end
+
+-- Detect RightControl key press to toggle visibility
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+
+    if Enum.KeyCode[keysus] and input.KeyCode == Enum.KeyCode[keysus] then
+        toggleVisibility()
+    end
+end)
+
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+-- Function to apply the drag system
+local function applyDragSystem()
+	wait(1) -- Delay so everything is loaded
+
+	for _, gui in pairs(CoreGui:GetChildren()) do
+		if gui:IsA("ScreenGui") and gui.Name == "name" then
+			local MainLib = gui:FindFirstChild("MainLib")
+			if MainLib then
+				local dragging = false
+				local dragStart, startPos
+
+				local function update(input)
+					local delta = input.Position - dragStart
+					MainLib.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+				end
+
+				MainLib.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+						dragging = true
+						dragStart = input.Position
+						startPos = MainLib.Position
+
+						input.Changed:Connect(function()
+							if input.UserInputState == Enum.UserInputState.End then
+								dragging = false
+							end
+						end)
+					end
+				end)
+
+				UserInputService.InputChanged:Connect(function(input)
+					if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+						update(input)
+					end
+				end)
+			end
+		end
+	end
+end
+
+applyDragSystem()
+
+SettingsTab:CreateLabel("Settings")
+SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
+    -- Capitalize the first letter of each word (preserves proper Enum.KeyCode formatting)
+    local formatted = v:gsub("^%l", string.upper):gsub("(%u)(%u+)", function(a, b)
+        return a .. b:lower()
+    end)
+
+    if Enum.KeyCode[formatted] then
+        keysus = formatted
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Keybind Updated",
+                Text = "New Keybind: " .. formatted,
+                Duration = 3
+            })
+        end)
+    else
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Invalid Key",
+                Text = "Please enter a valid KeyCode (e.g. RightShift, G, LeftControl)",
+                Duration = 4
+            })
+        end)
+    end
+end)
