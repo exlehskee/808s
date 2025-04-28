@@ -404,25 +404,33 @@ local function applySettings()
     if character and character:FindFirstChild("Humanoid") then
         local humanoid = character.Humanoid
 
-        -- WalkSpeed logic
-        if walkSpeedEnabled then
-            if humanoid.WalkSpeed == 0 and not noMoveRestrictions then
-                return
+        -- Check if WalkSpeed is 0 (movement restricted)
+        if humanoid.WalkSpeed == 0 then
+            -- If No Move Restrictions is off and WalkSpeed is enabled, restrict movement
+            if walkSpeedEnabled and not noMoveRestrictions then
+                humanoid.WalkSpeed = 0 -- Prevent movement if WalkSpeed is enabled and No Move Restrictions is off
+            elseif walkSpeedEnabled or noMoveRestrictions then
+                humanoid.WalkSpeed = 20 -- Allow movement if bypassed by No Move Restrictions or WalkSpeedEnabled
             end
-            humanoid.WalkSpeed = walkSpeedValue
-        elseif noMoveRestrictions and humanoid.WalkSpeed == 0 then
-            humanoid.WalkSpeed = 20
+            humanoid.JumpPower = 50 -- Always default jump during restricted movement
         else
-            humanoid.WalkSpeed = 20
-        end
+            -- If movement is not restricted (WalkSpeed > 0)
+            if walkSpeedEnabled then
+                humanoid.WalkSpeed = walkSpeedValue -- Apply custom WalkSpeed if enabled
+            else
+                humanoid.WalkSpeed = 20 -- Default WalkSpeed when disabled
+            end
 
-        if jumpPowerEnabled then
-            humanoid.JumpPower = jumpPowerValue
-        else
-            humanoid.JumpPower = 50
+            -- Apply JumpPower settings
+            if jumpPowerEnabled then
+                humanoid.JumpPower = jumpPowerValue -- Custom JumpPower if enabled
+            else
+                humanoid.JumpPower = 50 -- Default JumpPower when disabled
+            end
         end
     end
 end
+
 
 -- // More Important Variables
 local Players = game:GetService("Players")
@@ -1337,13 +1345,6 @@ workspace.ChildRemoved:Connect(function(child)
 end)
 
 
-
-game:GetService("RunService").Heartbeat:Connect(function()
-    if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
-        applySettings()
-    end
-end)
-
 function handleGraphics(char, low)
     if not char then return end
 
@@ -1471,8 +1472,4 @@ SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
             })
         end)
     end
-end)
-
-RunService.Heartbeat:Connect(function()
-    updateAngleEnhancer()
 end)
