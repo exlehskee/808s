@@ -95,30 +95,6 @@ end)
 
 -- // UI
 
-local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
-
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local isEnabled = true  -- Start with the UI element enabled
-
--- Assuming the "name" is a GUI element in CoreGui
-local guiElement = CoreGui:WaitForChild("name")
-
--- Function to toggle visibility
-local function toggleVisibility()
-    isEnabled = not isEnabled  -- Toggle the boolean value
-    guiElement.Enabled = isEnabled  -- Set the visibility based on the state
-end
-
--- Detect RightControl key press to toggle visibility
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-
-    if Enum.KeyCode[keysus] and input.KeyCode == Enum.KeyCode[keysus] then
-        toggleVisibility()
-    end
-end)
-
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
@@ -165,28 +141,62 @@ end
 applyDragSystem()
 
 SettingsTab:CreateLabel("Settings")
-SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
-    -- Capitalize the first letter of each word (preserves proper Enum.KeyCode formatting)
-    local formatted = v:gsub("^%l", string.upper):gsub("(%u)(%u+)", function(a, b)
-        return a .. b:lower()
-    end)
 
-    if Enum.KeyCode[formatted] then
-        keysus = formatted
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Keybind Updated",
-                Text = "New Keybind: " .. formatted,
-                Duration = 3
-            })
-        end)
-    else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Key",
-                Text = "Please enter a valid KeyCode (e.g. RightShift, G, LeftControl)",
-                Duration = 4
-            })
-        end)
-    end
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+-- Set your main UI name here:
+local mainUi = CoreGui:FindFirstChild("name")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MobileToggleUI"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.Parent = CoreGui
+
+-- Create TextButton
+local button = Instance.new("TextButton")
+button.Name = "ToggleUIButton"
+button.Size = UDim2.new(0.12, 0, 0.05, 0)
+button.Position = UDim2.new(0.44, 0, 0.02, 0)
+button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.GothamMedium -- closest to Montserrat in Roblox
+button.TextScaled = true
+button.Text = "Open"
+button.Parent = screenGui
+
+-- Make it draggable
+button.Active = true
+button.Draggable = true
+
+-- Add rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)
+corner.Parent = button
+
+-- Update button text depending on UI visibility
+local function updateButtonText()
+	if mainUi and mainUi.Enabled then
+		button.Text = "Close"
+	else
+		button.Text = "Open"
+	end
+end
+
+-- Button logic
+button.MouseButton1Click:Connect(function()
+	if mainUi then
+		mainUi.Enabled = not mainUi.Enabled
+		updateButtonText()
+	end
+end)
+
+-- Constantly check state
+task.spawn(function()
+	while true do
+		updateButtonText()
+		task.wait(0.5)
+	end
 end)
