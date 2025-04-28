@@ -19,8 +19,6 @@ local shootingUI = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shootin
 local autoGreenEnabled = false
 local autoGreenPercentage = 10
 
-local autoGuardEnabled = false
-
 local ShootingTab = Main:CreateSection("Shooting")
 local PlayersTab = Main:CreateSection("Player")
 local SettingsTab = Main:CreateSection("Settings")
@@ -37,11 +35,6 @@ end)
 
 -- // Players Tab
 
-PlayersTab:CreateLabel("Auto Guard")
-PlayersTab:CreateToggle("Enabled", function(value)
-    autoGuardEnabled = value
-end)
-
 -- // Source
 
 -- // Auto Green Logic
@@ -55,68 +48,6 @@ task.spawn(function()
         end
     end
 end)
-
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local toggled = false
-local autoGuardEnabled = false  -- Default state for Auto Guard is off
-local active = true
-
-local function findClosestPlayerWithBall()
-    local closestPlayer = nil
-    local closestDistance = math.huge
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            -- Check if player has a basketball (Tool)
-            if v.Character:FindFirstChildOfClass("Tool") then
-                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestPlayer = v
-                end
-            end
-        end
-    end
-    return closestPlayer
-end
-
--- Function to follow the player with the ball
-local function followPlayerWithBall()
-    while active do
-        if toggled and autoGuardEnabled then
-            local lockedPlayer = findClosestPlayerWithBall()
-            -- If a player with the basketball is found, move towards them
-            if lockedPlayer then
-                local targetPosition = lockedPlayer.Character.HumanoidRootPart.Position + (lockedPlayer.Character.HumanoidRootPart.CFrame.LookVector * -4) -- Stay in front of them
-                local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid:MoveTo(targetPosition)
-                end
-            end
-        end
-        task.wait(0.1)
-    end
-end
-
--- Detect when the player presses or holds F
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.F and autoGuardEnabled then  -- Only trigger if Auto Guard is enabled
-        toggled = true
-        followPlayerWithBall()
-    end
-end)
-
--- Detect when the player releases F
-UserInputService.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.F then
-        toggled = false
-    end
-end)
-
--- // UI
 
 local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
 
