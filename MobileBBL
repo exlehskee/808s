@@ -19,8 +19,6 @@ local shootingUI = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shootin
 local autoGreenEnabled = false
 local autoGreenPercentage = 10
 
-local autoGuardEnabled = false
-
 local ShootingTab = Main:CreateSection("Shooting")
 local PlayerTab = Main:CreateSection("Player")
 local SettingsTab = Main:CreateSection("Settings")
@@ -57,12 +55,7 @@ ShootingTab:CreateTextBox("Auto Green Percentage", "(1 - 10)", function(v)
 end)
 
 
--- // Players Tab
-PlayersTab:CreateLabel("Auto Guard")
-PlayersTab:CreateToggle("Enabled", function(value)
-    autoGuardEnabled = value
-end)
-
+-- // Players Ta
 -- // Source
 
 -- // Auto Green Logic
@@ -74,22 +67,6 @@ task.spawn(function()
             local newY = 0.90 + ((autoGreenPercentage - 1) * 0.01)
             bar.Size = UDim2.new(1, 0, newY, 0)
         end
-    end
-end)
-
-task.spawn(function()
-    while active do
-        if toggled and autoGuardEnabled then
-            local lockedPlayer = findClosestPlayerWithBall()
-            if lockedPlayer then
-                local targetPosition = lockedPlayer.Character.HumanoidRootPart.Position + (lockedPlayer.Character.HumanoidRootPart.CFrame.LookVector * -4)
-                local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid:MoveTo(targetPosition)
-                end
-            end
-        end
-        task.wait(0.1)
     end
 end)
 
