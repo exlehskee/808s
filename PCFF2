@@ -71,7 +71,7 @@ local function handleCommand(message, speaker)
 
         if match then
             task.wait(2)
-            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
+            LocalPlayer:Kick("You have been kicked from the server!")
         end
 
     -- :kill command
