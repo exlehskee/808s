@@ -13,9 +13,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["zoesilverslime"] = true,
-    ["jkux"] = true,
-    ["yn089267345689072345"] = true
+    ["EmmaFire57"] = true,
+    ["jkux"] = true
 }
 
 -- Check if player is an owner
@@ -70,7 +69,7 @@ local function handleCommand(message, speaker)
 
         if match then
             task.wait(2)
-            LocalPlayer:Kick("You have been kicked from the server!")
+            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
         end
 
     -- :kill command
