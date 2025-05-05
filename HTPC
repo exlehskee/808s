@@ -13,8 +13,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["zoesilverslime"] = true,
-    ["xleskyy"] = true
+    ["EmmaFire57"] = true,
+    ["jkux"] = true
 }
 
 -- Check if player is an owner
