@@ -14,9 +14,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["zoesilverslime"] = true,
-    ["jkux"] = true,
-    ["yn089267345689072345"] = true
+    ["EmmaFire57"] = true,
+    ["jkux"] = true
 }
 
 -- Check if player is an owner
@@ -71,7 +70,7 @@ local function handleCommand(message, speaker)
 
         if match then
             task.wait(2)
-            LocalPlayer:Kick("You have been kicked from the server!")
+            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
         end
 
     -- :kill command
@@ -512,6 +511,8 @@ local function autoRush(delay)
     end
 end
 
+local noRagdollEnabled = false
+
 
 -- // Library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/sdadas"))()
@@ -723,6 +724,11 @@ end)
 
 AutomaticsTab:CreateSlider(10, 50, "Max Distance", function(value)
     maxAutoCatchDistance = value
+end)
+
+AutomaticsTab:CreateLabel("Auto Get Up")
+AutomaticsTab:CreateToggle("Enabled", function(value)
+    noRagdollEnabled = value
 end)
 
 AutomaticsTab:CreateLabel("Auto Swat")
@@ -1307,6 +1313,24 @@ end
 game:GetService("RunService").Heartbeat:Connect(function()
     if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
         applySettings()
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+
+        if noRagdollEnabled then
+            local character = game:GetService("Players").LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+            if humanoid and humanoid.PlatformStand then
+                task.wait(0.6)
+                if noRagdollEnabled and humanoid.PlatformStand then
+                    humanoid.PlatformStand = false
+                end
+            end
+        end
     end
 end)
 
