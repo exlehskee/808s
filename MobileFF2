@@ -13,8 +13,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
 local ownerNames = {
-    ["EmmaFire57"] = true,
-    ["jkux"] = true
+    ["R0cketLucky2020"] = true,
+    ["xleskyy"] = true
 }
 
 -- Check if player is an owner
@@ -719,7 +719,7 @@ end)
 AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
     local num = tonumber(v)
 
-    if num and num >= 10 and num <= 30 then
+    if num and num >= 10 and num <= 50 then
         maxAutoSwatDistance = num
 
         -- Success notification
@@ -775,7 +775,7 @@ end)
 AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
     local num = tonumber(v)
 
-    if num and num >= 10 and num <= 30 then
+    if num and num >= 10 and num <= 50 then
         maxAutoSwatDistance = num
 
         -- Success notification
