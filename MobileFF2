@@ -985,7 +985,7 @@ PlayersTab:CreateTextBox("JumpPower Amount", "Amount (50-60)", function(v)
         pcall(function()
             game:GetService("StarterGui"):SetCore("SendNotification", {
                 Title = "Invalid JumpPower",
-                Text = "Enter a number from 20 to 23",
+                Text = "Enter a number from 50 to 60",
                 Duration = 3
             })
         end)
