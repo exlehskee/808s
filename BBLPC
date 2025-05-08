@@ -43,7 +43,7 @@ task.spawn(function()
         task.wait()
 
         if shootingUI.Visible and autoGreenEnabled then
-            local newY = 0.90 + ((autoGreenPercentage - 1) * 0.01)
+            local newY = 0.90 + ((autoGreenPercentage - 1) / 9 * 0.10)
             bar.Size = UDim2.new(1, 0, newY, 0)
         end
     end
