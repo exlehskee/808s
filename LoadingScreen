@@ -1,0 +1,241 @@
+local ScreenGui = Instance.new("ScreenGui")
+local Main = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local Title = Instance.new("TextLabel")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local Logo = Instance.new("ImageLabel")
+local Line = Instance.new("Frame")
+local UICorner_2 = Instance.new("UICorner")
+local Executor = Instance.new("TextLabel")
+local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
+local Loading = Instance.new("TextLabel")
+local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
+local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
+local UIGradient = Instance.new("UIGradient")
+local MainShadow = Instance.new("ImageLabel")
+
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.49999997, 0, 0.5, 0)
+Main.Size = UDim2.new(0.278657436, 0, 0.213930354, 0)
+
+UICorner.CornerRadius = UDim.new(0, 11)
+UICorner.Parent = Main
+
+Title.Name = "Title"
+Title.Parent = Main
+Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1.000
+Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Title.BorderSizePixel = 0
+Title.Position = UDim2.new(0.338409424, 0, 0.290720165, 0)
+Title.Size = UDim2.new(0.725888312, 0, 0.153047964, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Celaris v2"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.TextSize = 20.000
+Title.TextWrapped = true
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextYAlignment = Enum.TextYAlignment.Top
+
+UITextSizeConstraint.Parent = Title
+UITextSizeConstraint.MaxTextSize = 20
+
+Logo.Name = "Logo"
+Logo.Parent = Main
+Logo.AnchorPoint = Vector2.new(0.5, 0.5)
+Logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Logo.BackgroundTransparency = 1.000
+Logo.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Logo.BorderSizePixel = 0
+Logo.Position = UDim2.new(0.155156925, 0, 0.51386106, 0)
+Logo.Size = UDim2.new(0.169204742, 0, 0.581395328, 0)
+Logo.Image = "rbxassetid://97763532226384"
+
+Line.Name = "Line"
+Line.Parent = Main
+Line.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Line.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Line.BorderSizePixel = 0
+Line.Position = UDim2.new(0.287648052, 0, 0.290719688, 0)
+Line.Size = UDim2.new(0.00169204734, 0, 0.430232555, 0)
+
+UICorner_2.Parent = Line
+
+Executor.Name = "Executor"
+Executor.Parent = Main
+Executor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Executor.BackgroundTransparency = 1.000
+Executor.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Executor.BorderSizePixel = 0
+Executor.Position = UDim2.new(0.336534709, 0, 0.39658457, 0)
+Executor.Size = UDim2.new(0.284999996, 0, 0.194417313, 0)
+Executor.Font = Enum.Font.Gotham
+Executor.Text = "Executor: "
+Executor.TextColor3 = Color3.fromRGB(126, 126, 126)
+Executor.TextScaled = true
+Executor.TextSize = 17.000
+Executor.TextWrapped = true
+Executor.TextXAlignment = Enum.TextXAlignment.Left
+
+UITextSizeConstraint_2.Parent = Executor
+UITextSizeConstraint_2.MaxTextSize = 17
+
+Loading.Name = "Loading"
+Loading.Parent = Main
+Loading.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Loading.BackgroundTransparency = 1.000
+Loading.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Loading.BorderSizePixel = 0
+Loading.Position = UDim2.new(0.336534709, 0, 0.545905173, 0)
+Loading.Size = UDim2.new(0.631316483, 0, 0.175047025, 0)
+Loading.Font = Enum.Font.Unknown
+Loading.Text = "Loading Dependecies..."
+Loading.TextColor3 = Color3.fromRGB(194, 194, 194)
+Loading.TextScaled = true
+Loading.TextSize = 24.000
+Loading.TextWrapped = true
+Loading.TextXAlignment = Enum.TextXAlignment.Left
+Loading.TextYAlignment = Enum.TextYAlignment.Bottom
+
+UITextSizeConstraint_3.Parent = Loading
+UITextSizeConstraint_3.MaxTextSize = 24
+
+UIAspectRatioConstraint.Parent = Main
+UIAspectRatioConstraint.AspectRatio = 3.436
+
+UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(40, 40, 40)), ColorSequenceKeypoint.new(0.50, Color3.fromRGB(20, 20, 20)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(40, 40, 40))}
+UIGradient.Parent = Main
+
+MainShadow.Name = "MainShadow"
+MainShadow.Parent = Main
+MainShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+MainShadow.BackgroundTransparency = 1.000
+MainShadow.Position = UDim2.new(0.516590774, 0, 0.571258068, 0)
+MainShadow.Size = UDim2.new(1.24307024, 0, 1.81958163, 0)
+MainShadow.ZIndex = 0
+MainShadow.Image = "rbxassetid://12817543352"
+MainShadow.ImageTransparency = 0.500
+MainShadow.ScaleType = Enum.ScaleType.Slice
+MainShadow.SliceCenter = Rect.new(85, 85, 427, 427)
+
+-- Scripts:
+
+local function MDFSRDW_fake_script() -- Logo.spin 
+	local script = Instance.new('LocalScript', Logo)
+
+	local image = script.Parent
+	local runService = game:GetService("RunService")
+	
+	-- Make sure the anchor point is centered for proper rotation
+	
+	local rotationSpeed = 180 -- degrees per second (adjust if needed)
+	
+	runService.RenderStepped:Connect(function(deltaTime)
+		image.Rotation = (image.Rotation + rotationSpeed * deltaTime) % 360
+	end)
+	
+end
+coroutine.wrap(MDFSRDW_fake_script)()
+local function WFCEZKG_fake_script() -- Loading.Loading 
+	local script = Instance.new('LocalScript', Loading)
+
+	wait(0.75)
+	
+	local loadingText = script.Parent
+	local TweenService = game:GetService("TweenService")
+	
+	local phrases = {
+		"Loading Dependencies...",
+		"Initializing Assets...",
+		"Setting Up UI...",
+		"Optimizing Modules...",
+		"Finalizing Startup..."
+	}
+	
+	local totalSteps = 100
+	local stepDelay = 0.05
+	local currentStep = 0
+	local currentPhrase = ""
+	
+	-- Tween helper to fade just the phrase
+	local function tweenPhrase(newPhrase)
+		local fadeOut = TweenService:Create(loadingText, TweenInfo.new(0.05), {TextTransparency = 1})
+		local fadeIn = TweenService:Create(loadingText, TweenInfo.new(0.05), {TextTransparency = 0})
+	
+		fadeOut:Play()
+		fadeOut.Completed:Wait()
+	
+		currentPhrase = newPhrase
+		loadingText.Text = currentPhrase .. " " .. currentStep .. "%"
+	
+		fadeIn:Play()
+	end
+	
+	-- Fade out everything before destroying
+	local function fadeOutAllAndDestroy(container)
+		for _, obj in ipairs(container:GetDescendants()) do
+			if obj:IsA("TextLabel") then
+				TweenService:Create(obj, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+			elseif obj:IsA("ImageLabel") then
+				TweenService:Create(obj, TweenInfo.new(0.3), {ImageTransparency = 1}):Play()
+			elseif obj:IsA("Frame") then
+				TweenService:Create(obj, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+			elseif obj:IsA("UIStroke") then
+				TweenService:Create(obj, TweenInfo.new(0.3), {Transparency = 1}):Play()
+			end
+		end
+	
+		task.wait(0.35)
+		container:Destroy()
+	end
+	
+	-- Main loading logic
+	task.spawn(function()
+		for i, phrase in ipairs(phrases) do
+			tweenPhrase(phrase)
+	
+			local targetStep = math.floor((i / #phrases) * totalSteps)
+			while currentStep < targetStep do
+				currentStep += 1
+				loadingText.Text = currentPhrase .. " " .. currentStep .. "%"
+				task.wait(stepDelay)
+			end
+		end
+	
+		tweenPhrase("Finishing Up...")
+		while currentStep < totalSteps do
+			currentStep += 1
+			loadingText.Text = currentPhrase .. " " .. currentStep .. "%"
+			task.wait(stepDelay)
+		end
+	
+		task.wait(0.25)
+		fadeOutAllAndDestroy(loadingText.Parent.Parent)
+	end)
+	
+end
+coroutine.wrap(WFCEZKG_fake_script)()
+local function ZAZMNOV_fake_script() -- Main.movedown 
+	local script = Instance.new('LocalScript', Main)
+
+	local frame = script.Parent
+	local TweenService = game:GetService("TweenService")
+	
+	frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	frame.Position = UDim2.new(0.5, 0, -0.5, 0) -- start off-screen above center
+	
+	local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+	local goalPosition = UDim2.new(0.5, 0, 0.5, 0) -- center of screen
+	
+	TweenService:Create(frame, tweenInfo, {Position = goalPosition}):Play()
+end
+coroutine.wrap(ZAZMNOV_fake_script)()
