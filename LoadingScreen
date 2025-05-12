@@ -14,7 +14,7 @@ local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local UIGradient = Instance.new("UIGradient")
 local MainShadow = Instance.new("ImageLabel")
 
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 Main.Name = "Main"
