@@ -162,7 +162,7 @@ local function WFCEZKG_fake_script() -- Loading.Loading
 	}
 	
 	local totalSteps = 100
-	local stepDelay = 0.05
+	local stepDelay = 0.03
 	local currentStep = 0
 	local currentPhrase = ""
 	
