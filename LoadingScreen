@@ -1,3 +1,8 @@
+-- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
+
 local ScreenGui = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -13,6 +18,8 @@ local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
 local UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
 local UIGradient = Instance.new("UIGradient")
 local MainShadow = Instance.new("ImageLabel")
+
+--Properties:
 
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -37,7 +44,7 @@ Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Title.BorderSizePixel = 0
 Title.Position = UDim2.new(0.338409424, 0, 0.290720165, 0)
 Title.Size = UDim2.new(0.725888312, 0, 0.153047964, 0)
-Title.Font = Enum.Font.GothamBold
+Title.Font = Enum.Font.GothamMedium
 Title.Text = "Celaris v2"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextScaled = true
@@ -58,16 +65,18 @@ Logo.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Logo.BorderSizePixel = 0
 Logo.Position = UDim2.new(0.155156925, 0, 0.51386106, 0)
 Logo.Size = UDim2.new(0.169204742, 0, 0.581395328, 0)
-Logo.Image = "rbxassetid://97763532226384"
+Logo.Image = "rbxassetid://92408819531793"
+Logo.ScaleType = Enum.ScaleType.Crop
 
 Line.Name = "Line"
 Line.Parent = Main
-Line.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+Line.BackgroundColor3 = Color3.fromRGB(255, 104, 104)
 Line.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Line.BorderSizePixel = 0
-Line.Position = UDim2.new(0.287648052, 0, 0.290719688, 0)
-Line.Size = UDim2.new(0.00169204734, 0, 0.430232555, 0)
+Line.Position = UDim2.new(0.272466063, 0, 0.290719777, 0)
+Line.Size = UDim2.new(0.00928303134, 0, 0.430232584, 0)
 
+UICorner_2.CornerRadius = UDim.new(0, 25)
 UICorner_2.Parent = Line
 
 Executor.Name = "Executor"
@@ -79,7 +88,7 @@ Executor.BorderSizePixel = 0
 Executor.Position = UDim2.new(0.336534709, 0, 0.39658457, 0)
 Executor.Size = UDim2.new(0.284999996, 0, 0.194417313, 0)
 Executor.Font = Enum.Font.Gotham
-Executor.Text = "Executor: "
+Executor.Text = "Executor: " .. getexecutorname()
 Executor.TextColor3 = Color3.fromRGB(126, 126, 126)
 Executor.TextScaled = true
 Executor.TextSize = 17.000
@@ -97,7 +106,7 @@ Loading.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Loading.BorderSizePixel = 0
 Loading.Position = UDim2.new(0.336534709, 0, 0.545905173, 0)
 Loading.Size = UDim2.new(0.631316483, 0, 0.175047025, 0)
-Loading.Font = Enum.Font.GothamBlack
+Loading.Font = Enum.Font.GothamBold
 Loading.Text = "Loading Dependecies..."
 Loading.TextColor3 = Color3.fromRGB(194, 194, 194)
 Loading.TextScaled = true
@@ -119,8 +128,8 @@ MainShadow.Name = "MainShadow"
 MainShadow.Parent = Main
 MainShadow.AnchorPoint = Vector2.new(0.5, 0.5)
 MainShadow.BackgroundTransparency = 1.000
-MainShadow.Position = UDim2.new(0.516590774, 0, 0.571258068, 0)
-MainShadow.Size = UDim2.new(1.24307024, 0, 1.81958163, 0)
+MainShadow.Position = UDim2.new(0.5, 0, 0.513041496, 0)
+MainShadow.Size = UDim2.new(1.24101365, 0, 1.82813394, 0)
 MainShadow.ZIndex = 0
 MainShadow.Image = "rbxassetid://12817543352"
 MainShadow.ImageTransparency = 0.500
@@ -129,7 +138,7 @@ MainShadow.SliceCenter = Rect.new(85, 85, 427, 427)
 
 -- Scripts:
 
-local function MDFSRDW_fake_script() -- Logo.spin 
+local function IXKRHAW_fake_script() -- Logo.spin 
 	local script = Instance.new('LocalScript', Logo)
 
 	local image = script.Parent
@@ -144,8 +153,8 @@ local function MDFSRDW_fake_script() -- Logo.spin
 	end)
 	
 end
-coroutine.wrap(MDFSRDW_fake_script)()
-local function WFCEZKG_fake_script() -- Loading.Loading 
+coroutine.wrap(IXKRHAW_fake_script)()
+local function IAEY_fake_script() -- Loading.Loading 
 	local script = Instance.new('LocalScript', Loading)
 
 	wait(0.75)
@@ -162,7 +171,7 @@ local function WFCEZKG_fake_script() -- Loading.Loading
 	}
 	
 	local totalSteps = 100
-	local stepDelay = 0.03
+	local stepDelay = 0.05
 	local currentStep = 0
 	local currentPhrase = ""
 	
@@ -223,8 +232,8 @@ local function WFCEZKG_fake_script() -- Loading.Loading
 	end)
 	
 end
-coroutine.wrap(WFCEZKG_fake_script)()
-local function ZAZMNOV_fake_script() -- Main.movedown 
+coroutine.wrap(IAEY_fake_script)()
+local function RIMQK_fake_script() -- Main.movedown 
 	local script = Instance.new('LocalScript', Main)
 
 	local frame = script.Parent
@@ -238,4 +247,4 @@ local function ZAZMNOV_fake_script() -- Main.movedown
 	
 	TweenService:Create(frame, tweenInfo, {Position = goalPosition}):Play()
 end
-coroutine.wrap(ZAZMNOV_fake_script)()
+coroutine.wrap(RIMQK_fake_script)()
