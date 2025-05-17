@@ -8,7 +8,6 @@ if not allowedPlaces[game.PlaceId] then
     game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
--- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
@@ -796,7 +795,7 @@ CatchingTab:Toggle("Pull Vector", false, function(value)
     end
 end)
 
-CatchingTab:Slider("Pull Vector Distance", 5, 30, 5, function(value)
+CatchingTab:Slider("Pull Vector Distance", 5, 50, 5, function(value)
     _G.PullVectorDistance = value
 end)
 
