@@ -1,4 +1,3 @@
--- // Celaris BBL PC
 
 local allowedPlaces = {
     [14386691987] = true,
@@ -6,141 +5,483 @@ local allowedPlaces = {
 }
 
 if not allowedPlaces[game.PlaceId] then
-    game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+    game:GetService("Players").LocalPlayer:Kick("Wrong Game Check Supported Games")
 end
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/sdadas"))()
-local Main = Library:Create("Celaris", "Basketball Legends")
+local Players = game:GetService("Players")
+local Player = game:GetService("Players").LocalPlayer
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+-- // notification system
+local existing = CoreGui:FindFirstChild("CustomNotifications")
+if existing then
+    existing:Destroy()
+end
+-- Destroy any old instances for fresh reloads
+local existing = CoreGui:FindFirstChild("CustomNotifications")
+if existing then
+    existing:Destroy()
+end
+
+local TweenService = game:GetService("TweenService")
+
+-- Create ScreenGui & Container
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomNotifications"
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = CoreGui
+
+local container = Instance.new("Frame")
+container.Name = "NotificationContainer"
+container.BackgroundTransparency = 1
+container.Size = UDim2.new(1, 0, 1, 0)
+container.Position = UDim2.new(0, 0, 0, 0)
+container.Parent = screenGui
+
+local activeNotifs = {}
+
+local activeNotifs = {}
+
+-- Predefined table of images
+local images = {
+    Logo = "rbxassetid://133212065103273",
+    Teleport = "rbxassetid://10734949856",
+    Celaris = "rbxassetid://93014249158872",
+    Update = "rbxassetid://10709790387",
+    Settings = "rbxassetid://10734950309",
+    Warning = "rbxassetid://10709752996",
+    Error = "rbxassetid://10709753149"
+}
+
+function showNotification(title, text, duration, imageType)
+    -- Set default values for duration and imageType
+    duration = duration or 341
+    imageType = imageType or "Celaris"  -- Default to "Update" if no image type is provided
+
+    -- Create notification UI
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 300, 0, 70)
+    notif.Position = UDim2.new(1, 10, 1, -10)
+    notif.AnchorPoint = Vector2.new(1, 1)
+    notif.BackgroundColor3 = Color3.fromRGB(27, 27, 27)
+    notif.ClipsDescendants = true
+    notif.ZIndex = 10
+    notif.Parent = container
+
+    local corner = Instance.new("UICorner", notif)
+    corner.CornerRadius = UDim.new(0, 11)
+
+    local stroke = Instance.new("UIStroke", notif)
+    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Thickness = 1
+
+    -- Get the appropriate icon based on the imageType
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0, 40, 0, 40)
+    icon.Position = UDim2.new(0, 10, 0.5, -20)
+    icon.BackgroundTransparency = 1
+    icon.Image = images[imageType] or images.Update  -- Default to "Update" if imageType doesn't exist
+    icon.ZIndex = 11
+    icon.Parent = notif
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -60, 0, 20)
+    titleLabel.Position = UDim2.new(0, 60, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 16
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 11
+    titleLabel.Parent = notif
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -60, 0, 20)
+    textLabel.Position = UDim2.new(0, 60, 0, 35)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.Gotham
+    textLabel.Text = text
+    textLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    textLabel.TextSize = 14
+    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.ZIndex = 11
+    textLabel.Parent = notif
+
+    table.insert(activeNotifs, notif)
+
+    -- Reposition all active notifs (bottom to top)
+    for i, n in ipairs(activeNotifs) do
+        local targetY = -10 - ((#activeNotifs - i) * 80)
+        TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(1, -10, 1, targetY)
+        }):Play()
+    end
+
+    -- Wait and slide out
+    task.delay(duration, function()
+        local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 10, 1, -10)
+        })
+        tweenOut:Play()
+        tweenOut.Completed:Wait()
+        notif:Destroy()
+
+        -- Remove from active list
+        table.remove(activeNotifs, table.find(activeNotifs, notif))
+
+        -- Reposition remaining
+        for i, n in ipairs(activeNotifs) do
+            local targetY = -10 - ((#activeNotifs - i) * 80)
+            TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -10, 1, targetY)
+            }):Play()
+        end
+    end)
+end
+
+-- // Loading Screen
+loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/LoadingScreen")()
+wait(1) -- Wait to load the loader
+local screenGui = game:GetService("CoreGui"):FindFirstChild("ScreenGui")
+if not screenGui then
+    warn("Loading Screen not found.")
+    return
+end
+
+local main = screenGui.Main
+local executorLabel = main.Executor
+local loadingLabel = main.Loading
+
+local exc = getexecutorname()
+executorLabel.Text = "Executor: " .. exc
+loadingLabel.Font = Enum.Font.GothamBold
+
+wait(7.25) -- // wait 7.25 then load the script.
+
+showNotification("Celaris V2", "Last Update: 5/16/2025", 5, "Celaris")
+local games = {
+    ["Park"] = 14386691987,
+    ["Play Now"] = 14259168147
+}
+if game.PlaceId == games["Park"] then
+    showNotification("Basketball Legends", "Mode: My Park", 5, "Logo")
+elseif game.PlaceId == games["Play Now"] then
+    showNotification("Basketball Legends", "Mode: Play Now", 5, "Logo")
+elseif not games[game.PlaceId] then
+    showNotification("Unsupported Game", "This is a none supported game.", 5, "Error")
+    wait(0.5)
+    game:GetService("Players").LocalPlayer:Kick("Celaris V2 | Error: Unsupported Game")
+end
+
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local PlaceID = game.PlaceId
+local JobID = game.JobId
+local AllIDs = {}
+local currentHour = os.date("!*t").hour
+
+
+local success, data = pcall(function()
+    return HttpService:JSONDecode(readfile("NotSameServers.json"))
+end)
+
+if success and type(data) == "table" then
+    AllIDs = data
+else
+    AllIDs = { currentHour }
+    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+end
+
+-- // Important Variables
 
 local player = game.Players.LocalPlayer
+
 local bar = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shooting"):WaitForChild("Bar")
 local shootingUI = player.PlayerGui:WaitForChild("Visual"):WaitForChild("Shooting")
 
-local autoGreenEnabled = false
-local autoGreenPercentage = 10
+local Settings = {
+    keysus = Enum.KeyCode.RightControl,
 
-local ShootingTab = Main:CreateSection("Shooting")
-local PlayersTab = Main:CreateSection("Player")
-local SettingsTab = Main:CreateSection("Settings")
+	autoGreenEnabled = false,
+    autoGreenPercentage = 10,
+
+	autoGuardEnabled = false,
+    autoGuardDistance = 3,
+
+	reachEnabled = false,
+	reachDistance = 10,
+
+	holdingF = false
+}
+-- // Script
+local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
+local keybind = Settings.keysus
+local win = lib:Window("Celaris | Basketball Legends", Color3.fromRGB(255, 104, 104))
+
+local ShootingTab = win:Tab("Shooting")
+local PlayersTab = win:Tab("Player")
+local TeleportsTab = win:Tab("Teleports")
+local SettingsTab = win:Tab("Config")
 
 -- // Shooting Tab
-ShootingTab:CreateLabel("Auto Green")
-ShootingTab:CreateToggle("Enabled", function(value)
-    autoGreenEnabled = value
+
+ShootingTab:Toggle("Auto Green", false, function(value)
+    Settings.autoGreenEnabled = value
+    if value == true then
+        showNotification("Auto Green", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Green", "Status: Disabled", 2, "Warning")
+    end
 end)
 
-ShootingTab:CreateSlider(1, 10, "Auto Green Percentage", function(value) 
-    autoGreenPercentage = value 
+ShootingTab:Slider("Auto Green Percentage", 1, 10, 10, function(value)
+    Settings.autoGreenPercentage = value
 end)
 
 -- // Players Tab
 
+PlayersTab:Toggle("Auto Guard", false, function(value)
+    Settings.autoGuardEnabled = value
+    if value == true then
+        showNotification("Auto Guard", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Guard", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+PlayersTab:Slider("Auto Guard Distance", 5, 20, 6, function(value)
+    Settings.autoGuardDistance = value
+end)
+
+local reachLoopRunning = false
+
+local function startReach()
+    if reachLoopRunning then return end
+    reachLoopRunning = true
+
+    task.spawn(function()
+        while Settings.reachEnabled do
+            task.wait()
+
+            if not Player.Character then continue end
+            local upperTorso = Player.Character:FindFirstChild("UpperTorso")
+            if not upperTorso then continue end
+
+            for _, obj in workspace:GetChildren() do
+                if obj:IsA("BasePart") and obj.Name == "Basketball" and obj:FindFirstChildWhichIsA("TouchTransmitter") then
+                    local distance = (upperTorso.Position - obj.Position).Magnitude
+                    if distance <= Settings.reachDistance then
+                        firetouchinterest(upperTorso, obj, 0)
+                        firetouchinterest(upperTorso, obj, 1)
+                    end
+                end
+            end
+        end
+
+        -- Reset the flag once the loop ends
+        reachLoopRunning = false
+    end)
+end
+
+PlayersTab:Toggle("Ball Magnet", false, function(value)
+    Settings.reachEnabled = value
+
+    if value then
+        showNotification("Ball Magnet", "Status: Enabled", 2, "Update")
+        startReach()
+    else
+        showNotification("Ball Magnet", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+PlayersTab:Slider("Ball Magnet Range", 5, 12, 10, function(value)
+    Settings.reachDistance = value
+end)
+
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if not processed and input.KeyCode == Enum.KeyCode.F then
+		Settings.holdingF = true
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.F then
+		Settings.holdingF = false
+	end
+end)
+RunService.RenderStepped:Connect(function()
+	if Settings.autoGuardEnabled and Settings.holdingF then
+		local player = game.Players.LocalPlayer
+		local character = player.Character
+		if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+
+		local closest, shortest = nil, Settings.autoGuardDistance
+		for _, other in pairs(game.Players:GetPlayers()) do
+			if other ~= player and other.Character and other.Character:FindFirstChild("Basketball") and other.Character:FindFirstChild("HumanoidRootPart") then
+				local distance = (other.Character.HumanoidRootPart.Position - character.HumanoidRootPart.Position).Magnitude
+				if distance < shortest then
+					shortest = distance
+					closest = other
+				end
+			end
+		end
+
+		if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = character:FindFirstChild("HumanoidRootPart")
+			local targetHRP = closest.Character.HumanoidRootPart
+			local offsetBack = -targetHRP.CFrame.LookVector * 2 -- 2 studs behind
+			local goalPos = targetHRP.Position + offsetBack + Vector3.new(0, 0, 0)
+
+			-- Gently move toward the offset position, preserving manual input
+			local direction = (goalPos - hrp.Position)
+			if direction.Magnitude > 0.5 then
+				local moveDirection = Vector3.new(direction.X, 0, direction.Z).Unit
+				character:FindFirstChildWhichIsA("Humanoid"):Move(moveDirection, false)
+			end
+		end
+	end
+end)
+
 -- // Source
 
--- // Auto Green Logic
 task.spawn(function()
     while true do
         task.wait()
 
-        if shootingUI.Visible and autoGreenEnabled then
-            local newY = 0.90 + ((autoGreenPercentage - 1) / 9 * 0.10)
+        if shootingUI.Visible and Settings.autoGreenEnabled then
+            local newY = 0.90 + ((Settings.autoGreenPercentage - 1) / 9 * 0.10)
             bar.Size = UDim2.new(1, 0, newY, 0)
         end
     end
 end)
 
-local toggleKey = Enum.KeyCode.RightControl -- You can change this to any key
+local function startReach()
+    task.spawn(function()
+        while true do
+            task.wait()
+            
+            if not Settings.reachEnabled then continue end
+            if not Player.Character then continue end
 
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
-local isEnabled = true  -- Start with the UI element enabled
+            local upperTorso = Player.Character:FindFirstChild("UpperTorso")
+            if not upperTorso then continue end
 
--- Assuming the "name" is a GUI element in CoreGui
-local guiElement = CoreGui:WaitForChild("name")
-
--- Function to toggle visibility
-local function toggleVisibility()
-    isEnabled = not isEnabled  -- Toggle the boolean value
-    guiElement.Enabled = isEnabled  -- Set the visibility based on the state
+            for _, obj in workspace:GetChildren() do
+                if obj:IsA("BasePart") and obj.Name == "Basketball" and obj:FindFirstChildWhichIsA("TouchTransmitter") then
+                    local distance = (upperTorso.Position - obj.Position).Magnitude
+                    if distance <= Settings.reachDistance then
+                        firetouchinterest(upperTorso, obj, 0)
+                        firetouchinterest(upperTorso, obj, 1)
+                    end
+                end
+            end
+        end
+    end)
 end
 
--- Detect RightControl key press to toggle visibility
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
 
-    if Enum.KeyCode[keysus] and input.KeyCode == Enum.KeyCode[keysus] then
-        toggleVisibility()
+-- // UI toggling
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Settings.keysus then
+        local ui = CoreGui:FindFirstChild("name")
+        if ui and ui:IsA("ScreenGui") then
+            ui.Enabled = not ui.Enabled
+        end
     end
 end)
 
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
+local gang = game:GetService("CoreGui")
+local gangbang = gang:FindFirstChild("name").Main
+local stroke = gangbang:FindFirstChild("UIStroke")
+local corner = gangbang:FindFirstChild("UICorner")
 
--- Function to apply the drag system
-local function applyDragSystem()
-	wait(1) -- Delay so everything is loaded
+stroke.Color = Color3.fromRGB(255, 104, 104)
+stroke.Thickness = 1.35
+corner.CornerRadius = UDim.new(0, 12)
+local gg = gang:WaitForChild("name")
+gg.Main.Size = UDim2.new(0, 560, 0, 340)
 
-	for _, gui in pairs(CoreGui:GetChildren()) do
-		if gui:IsA("ScreenGui") and gui.Name == "name" then
-			local MainLib = gui:FindFirstChild("MainLib")
-			if MainLib then
-				local dragging = false
-				local dragStart, startPos
-
-				local function update(input)
-					local delta = input.Position - dragStart
-					MainLib.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-				end
-
-				MainLib.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						dragging = true
-						dragStart = input.Position
-						startPos = MainLib.Position
-
-						input.Changed:Connect(function()
-							if input.UserInputState == Enum.UserInputState.End then
-								dragging = false
-							end
-						end)
-					end
-				end)
-
-				UserInputService.InputChanged:Connect(function(input)
-					if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-						update(input)
-					end
-				end)
-			end
-		end
-	end
-end
-
-applyDragSystem()
-
-SettingsTab:CreateLabel("Settings")
-SettingsTab:CreateTextBox("UI Keybind", "Key Here", function(v)
-    -- Capitalize the first letter of each word (preserves proper Enum.KeyCode formatting)
-    local formatted = v:gsub("^%l", string.upper):gsub("(%u)(%u+)", function(a, b)
-        return a .. b:lower()
+SettingsTab:Textbox("UI Keybind", false, function(v)
+    local success, key = pcall(function()
+        return Enum.KeyCode[v]
     end)
 
-    if Enum.KeyCode[formatted] then
-        keysus = formatted
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Keybind Updated",
-                Text = "New Keybind: " .. formatted,
-                Duration = 3
-            })
-        end)
+    if success and key then
+        Settings.keysus = key
+        showNotification("UI Keybind", "Set keybind to: " .. v, 3, "Update")
     else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Key",
-                Text = "Please enter a valid KeyCode (e.g. RightShift, G, LeftControl)",
-                Duration = 4
-            })
-        end)
+        showNotification("UI Keybind", "Put in a valid keybind!", 3, "Error")
+    end
+end)
+
+TeleportsTab:Button("Play Now", function()
+    showNotification("Game Teleport", "Destination: Play Now", 3, "Teleport")
+    TeleportService:Teleport(14259168147, player)
+end)
+
+TeleportsTab:Button("Park", function()
+    showNotification("Game Teleport", "Destination: Practice", 3, "Teleport")
+    TeleportService:Teleport(14386691987, player)
+end)
+
+TeleportsTab:Button("Rejoin Server", function()
+    showNotification("Game Teleport", "Destination: Same Server", 3, "Teleport")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) 
+end)
+
+TeleportsTab:Button("Join A New Server", function()
+    showNotification("Game Teleport", "Joining a new server...", 3, "Teleport")
+    local foundServer = false
+    local cursor = ""
+
+    while not foundServer do
+        local url = "https://games.roblox.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
+        if cursor ~= "" then url = url .. "&cursor=" .. cursor end
+
+        local response = HttpService:JSONDecode(game:HttpGet(url))
+        cursor = response.nextPageCursor or ""
+
+        for _, server in ipairs(response.data) do
+            local id = server.id
+
+            if server.playing >= 5 and server.playing < server.maxPlayers and id ~= JobID then
+                local alreadyJoined = false
+
+                -- Check cache
+                for _, cached in ipairs(AllIDs) do
+                    if tonumber(cached) ~= nil and tonumber(cached) ~= currentHour then
+                        -- Clear file if hour has changed
+                        delfile("NotSameServers.json")
+                        AllIDs = { currentHour }
+                        break
+                    end
+                    if id == cached then
+                        alreadyJoined = true
+                        break
+                    end
+                end
+
+                if not alreadyJoined then
+                    table.insert(AllIDs, id)
+                    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+                    TeleportService:TeleportToPlaceInstance(PlaceID, id, Players.LocalPlayer)
+                    foundServer = true
+                    break
+                end
+            end
+        end
+
+        if cursor == "" then break end
     end
 end)
