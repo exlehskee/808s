@@ -812,11 +812,11 @@ end)
 CatchingTab:Textbox("Pull Vector Distance", false, function(v)
     local num = tonumber(v)
 
-    if num and num >= 5 and num <= 30 then
+    if num and num >= 5 and num <= 50 then
         _G.PullVectorDistance = num
         showNotification("Pull Vector Distance Updated", "New Distance: " .. num, 3, "Update")
     else
-        showNotification("Invalid Distance", "Enter a number from 5 to 30", 3, "Warning")
+        showNotification("Invalid Distance", "Enter a number from 5 to 50", 3, "Warning")
     end
 end)
 
