@@ -8,105 +8,11 @@ if not allowedPlaces[game.PlaceId] then
     game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
 end
 
+-- // Celaris Premium (New Feature)
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-
-local ownerNames = {
-    ["EmmaFire57"] = true,
-    ["jkux"] = true
-}
-
--- Check if player is an owner
-local function isOwner(name)
-    return ownerNames[name:lower()] == true
-end
-
--- Find a player from a name fragment (username or displayname)
-local function findPlayerByName(nameFragment)
-    nameFragment = nameFragment:lower()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        local uname = plr.Name:lower()
-        local dname = plr.DisplayName:lower()
-
-        if uname == nameFragment or dname == nameFragment then
-            return plr
-        elseif uname:find(nameFragment) or dname:find(nameFragment) then
-            return plr
-        end
-    end
-    return nil
-end
-
--- Handle commands
-local function handleCommand(message, speaker)
-    if not isOwner(speaker.Name) then return end
-
-    local args = message:split(" ")
-    local cmd = args[1]:lower()
-
-    -- :talk command
-    if cmd == ":talk" then
-        local say = message:sub(#cmd + 2)
-        local chatRemote = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
-        if chatRemote and chatRemote:FindFirstChild("SayMessageRequest") then
-            chatRemote.SayMessageRequest:FireServer(say, "All")
-        end
-
-    -- :kick command
-    elseif cmd == ":kick" and args[2] then
-        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1"):lower()
-        local match = false
-
-        if not isOwner(LocalPlayer.Name) then
-            local uname = LocalPlayer.Name:lower()
-            local dname = LocalPlayer.DisplayName:lower()
-
-            if uname == targetName or dname == targetName or uname:find(targetName) or dname:find(targetName) then
-                match = true
-            end
-        end
-
-        if match then
-            task.wait(2)
-            LocalPlayer:Kick("Celaris | A Premium Member/Moderator has kicked you from the server")
-        end
-
-    -- :kill command
-    elseif cmd == ":kill" and args[2] then
-        local targetName = message:sub(#cmd + 2):gsub("^%s*(.-)%s*$", "%1"):lower()
-        local uname = LocalPlayer.Name:lower()
-        local dname = LocalPlayer.DisplayName:lower()
-
-        if not isOwner(LocalPlayer.Name) and (
-            uname == targetName or dname == targetName or
-            uname:find(targetName) or dname:find(targetName)
-        ) then
-            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum.Health = 0
-            end
-        end
-    end
-end
-
--- Connect to chat events of a player
-local function connectPlayer(plr)
-    plr.Chatted:Connect(function(msg)
-        handleCommand(msg, plr)
-    end)
-end
-
--- Connect all existing players
-for _, plr in ipairs(Players:GetPlayers()) do
-    connectPlayer(plr)
-end
-
--- Connect future players
-Players.PlayerAdded:Connect(connectPlayer)
-
-
-
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
 
 -- Executor Check
 local function BadExecutors()
@@ -132,11 +38,7 @@ end
 -- Anti-Cheat Bypass
 LPH_NO_VIRTUALIZE(function()
     if hookmetamethod and not BadExecutors() then
-        if game.PlaceId ~= 8206123457 and game.PlaceId == 8204899140 then
-            local Players = game:GetService("Players")
-            local ReplicatedStorage = game:GetService("ReplicatedStorage")
-            local ReplicatedFirst = game:GetService("ReplicatedFirst")
-
+        if game.PlaceId == 8204899140 or game.PlaceId == 17541256525 then
             local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
             local ExpectedPath = LocalPlayer:GetFullName() .. ".PlayerScripts.PlayerScriptsLoader.PlayerModule.LocalScript"
 
@@ -207,119 +109,355 @@ LPH_NO_VIRTUALIZE(function()
 end)()
 
 if AC_BYPASS == true then
-    print("Celaris Injected")
+    print("2x60")
 else
-    print("Celaris failed to bypass!")
+    print("Error: 2x60")
 end
 
-local Player = game:GetService("Players").LocalPlayer
-local UserInputService = game:GetService("UserInputService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 
-local keysus = "RightControl"
-local Magnets = false
-local ShowHitbox = false
-local Range = 10
-local autoCatchEnabled = false
-local catchDelay = 0.01
-local maxAutoCatchDistance = 10 -- default value
-local autoSwatEnabled = false
-local swatDelay = 0.01
-local maxAutoSwatDistance = 10
-local autoQBEnabled = false
-local resetAfterCatchEnabled = false
-local resetAfterCatchDelay = 1
-local autoRushEnabled = false
-local autoRushDelay = 0.5
-local lowerGraphicsEnabled = false
-local originalMaterials = {}
-local stadiumOriginalCFrame = nil
-local ballTrailEnabled = false
-
-local tackleReachEnabled = false
-local autoJumpEnabled = false
-local jumpDelay = 0.01
-local jumpMaxDistance = 10
-
-local noRagdollEnabled = false
-
-local pullEnabled = false
-local pullDistance = 10
-local pullDelayEnabled = false
-local pullDelayAmount = 0.1
-local lastPossessTime = 0
+-- Celaris Loading UI
+-- UI Loading Screen for Celaris
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local toggleBlockReach = false
-local blockReachAmount = 3 -- default slider value
-local originalSize = Vector3.new(0.8500000238418579, 5, 1.5)
-local blockPartName = "BlockPart"
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+
+local CoreGui = game:GetService("CoreGui")
+
+-- Remove existing instance if any
+local existing = CoreGui:FindFirstChild("CustomNotifications")
+if existing then
+    existing:Destroy()
+end
+-- Destroy any old instances for fresh reloads
+local existing = CoreGui:FindFirstChild("CustomNotifications")
+if existing then
+    existing:Destroy()
+end
+
+local TweenService = game:GetService("TweenService")
+
+-- Create ScreenGui & Container
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomNotifications"
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = CoreGui
+
+local container = Instance.new("Frame")
+container.Name = "NotificationContainer"
+container.BackgroundTransparency = 1
+container.Size = UDim2.new(1, 0, 1, 0)
+container.Position = UDim2.new(0, 0, 0, 0)
+container.Parent = screenGui
+
+local activeNotifs = {}
+
+local activeNotifs = {}
+
+-- Predefined table of images
+local images = {
+    FF2Logo = "rbxassetid://133212065103273",
+    Teleport = "rbxassetid://10734949856",
+    Celaris = "rbxassetid://97763532226384",
+    Update = "rbxassetid://10709790387",
+    Settings = "rbxassetid://10734950309",
+    Warning = "rbxassetid://10709752996",  -- Example new image type
+    Error = "rbxassetid://10709753149"    -- Example new image type
+}
+
+function showNotification(title, text, duration, imageType)
+    -- Set default values for duration and imageType
+    duration = duration or 3
+    imageType = imageType or "Celaris"  -- Default to "Update" if no image type is provided
+
+    -- Create notification UI
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 300, 0, 70)
+    notif.Position = UDim2.new(1, 10, 1, -10)
+    notif.AnchorPoint = Vector2.new(1, 1)
+    notif.BackgroundColor3 = Color3.fromRGB(27, 27, 27)
+    notif.ClipsDescendants = true
+    notif.ZIndex = 10
+    notif.Parent = container
+
+    local corner = Instance.new("UICorner", notif)
+    corner.CornerRadius = UDim.new(0, 11)
+
+    local stroke = Instance.new("UIStroke", notif)
+    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Thickness = 1
+
+    -- Get the appropriate icon based on the imageType
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0, 40, 0, 40)
+    icon.Position = UDim2.new(0, 10, 0.5, -20)
+    icon.BackgroundTransparency = 1
+    icon.Image = images[imageType] or images.Update  -- Default to "Update" if imageType doesn't exist
+    icon.ZIndex = 11
+    icon.Parent = notif
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -60, 0, 20)
+    titleLabel.Position = UDim2.new(0, 60, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 16
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 11
+    titleLabel.Parent = notif
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -60, 0, 20)
+    textLabel.Position = UDim2.new(0, 60, 0, 35)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.Gotham
+    textLabel.Text = text
+    textLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    textLabel.TextSize = 14
+    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.ZIndex = 11
+    textLabel.Parent = notif
+
+    table.insert(activeNotifs, notif)
+
+    -- Reposition all active notifs (bottom to top)
+    for i, n in ipairs(activeNotifs) do
+        local targetY = -10 - ((#activeNotifs - i) * 80)
+        TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(1, -10, 1, targetY)
+        }):Play()
+    end
+
+    -- Wait and slide out
+    task.delay(duration, function()
+        local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 10, 1, -10)
+        })
+        tweenOut:Play()
+        tweenOut.Completed:Wait()
+        notif:Destroy()
+
+        -- Remove from active list
+        table.remove(activeNotifs, table.find(activeNotifs, notif))
+
+        -- Reposition remaining
+        for i, n in ipairs(activeNotifs) do
+            local targetY = -10 - ((#activeNotifs - i) * 80)
+            TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -10, 1, targetY)
+            }):Play()
+        end
+    end)
+end
 
 
-local rainWasInitiallyEnabled = false
-local snowWasInitiallyEnabled = false
-local rainSoundWasPlaying = false
+-- All settings stored in one table
+local Settings = {
+    keysus = Enum.KeyCode.RightControl,
 
-local UseMagnetDelay = false
-local MagnetDelay = 0.01 -- Default value
-local HitboxColor = Color3.fromRGB(178, 178, 178) -- Default color
-local HitboxTransparency = 0.8 -- Default transparency
+    -- be abel to see team chat
+    seeTeamChat = false,
+    -- Magnets
+    Magnets = false,
+    ShowHitbox = false,
+    Range = 10,
 
+    -- Visualie best jump spot
+    visualizeJumpSpot = false,
+    LandingSpotColor = Color3.fromRGB(0, 255, 4),
+
+    removeBallTrail = false,
+
+    -- Auto Catch
+    autoCatchEnabled = false,
+    catchDelay = 0.01,
+    maxAutoCatchDistance = 10,
+
+    TrajectoryColor = Color3.fromRGB(255, 255, 255),
+
+    -- Auto Swat
+    autoSwatEnabled = false,
+    swatDelay = 0.01,
+    maxAutoSwatDistance = 10,
+
+    -- Auto Quarterback
+    autoQBEnabled = false,
+
+    -- Reset After Catch
+    resetAfterCatchEnabled = false,
+    resetAfterCatchDelay = 1,
+
+    -- Auto Rush
+    autoRushEnabled = false,
+    autoRushDelay = 0.5,
+
+    -- Lower Graphics
+    lowerGraphicsEnabled = false,
+    -- Jump Cooldown
+    jumpCooldownActive = false,
+
+    -- Tackle Reach
+    tackleReachEnabled = false,
+    -- Auto Jump
+    autoJumpEnabled = false,
+    jumpDelay = 0.35,
+    jumpMaxDistance = 45,
+
+    -- Materials + Visuals
+    originalMaterials = {},
+    stadiumOriginalCFrame = nil,
+    ballTrailEnabled = false,
+
+    -- Magnet Delay
+    UseMagnetDelay = false,
+    MagnetDelay = 0.01,
+
+    -- Hitbox
+    HitboxColor = Color3.fromRGB(178, 178, 178),
+    HitboxTransparency = 0.5,
+
+    -- Block Reach
+    toggleBlockReach = false,
+    blockReachAmount = 3,
+
+    -- Player Settings
+    walkSpeedEnabled = false,
+    walkSpeedValue = 20,
+    jumpPowerEnabled = false,
+    jumpPowerValue = 50,
+    noMoveRestrictions = false,
+
+    -- Weather
+    workspace = game:GetService("Workspace"),
+    rainWasInitiallyEnabled = false,
+    snowWasInitiallyEnabled = false,
+    rainSoundWasPlaying = false,
+    weather = workspace:FindFirstChild("SkyWeather"),
+    sounds = workspace:FindFirstChild("Sounds"),
+
+    -- No QB Boundaries
+    scrambleWall = nil,
+
+    -- No Dive Cooldown
+    noRagdollEnabled = false,
+
+    -- Last Had Football
+    lastHadFootball = false,
+    -- More Block Settings
+    originalSize = Vector3.new(0.8500000238418579, 5, 1.5),
+    blockPartName = "BlockPart",
+
+    pullEnabled = false,
+    pullDistance = 10,
+    pullDelayEnabled = false,
+    pullDelayAmount = 0.1,
+    lastPossessTime = 0,
+    -- Jump Cooldown
+    noJumpCooldownEnabled = false,
+    lastFakeJumpTime = 0,
+    jumpCooldownWait = 0.5,
+    jumpConnection = nil,
+
+    quickTPEnabled = false,
+    tpDistance = 5,
+    tpKey = Enum.KeyCode.F,
+
+    kickOn = false,
+    kickerMode = "Perfect",
+    kickType = "Normal",
+    KickerTrajectoryColor = Color3.fromRGB(255, 255, 255)
+}
+
+
+-- // Players (Main Variables)
 local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-
-Player.CharacterAdded:Connect(function(char)
-    Character = char
-end)
-
--- Walkspeed and No Move Restrictions Variable
-local walkSpeedEnabled = false
-local walkSpeedValue = 20  -- Default WalkSpeed
-local jumpPowerEnabled = false
-local jumpPowerValue = 50  -- Default JumpPower
-local noMoveRestrictions = false
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local function applyBlockReach()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-	local blockPart = char:FindFirstChild(blockPartName)
+	local blockPart = char:FindFirstChild(Settings.blockPartName)
+
 	if blockPart and blockPart:IsA("BasePart") then
-		blockPart.Size = Vector3.new(2.5, originalSize.Y, originalSize.Z + blockReachAmount)
+		-- Save original size only once
+		if not Settings.originalSize then
+			Settings.originalSize = blockPart.Size
+		end
+
+		-- Apply size change using settings
+		blockPart.Size = Vector3.new(
+			4.5,
+			Settings.originalSize.Y,
+			Settings.originalSize.Z + Settings.blockReachAmount
+		)
 	end
 end
 
--- Function to reset block reach
 local function resetBlockReach()
 	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 	local blockPart = char:FindFirstChild(blockPartName)
 	if blockPart and blockPart:IsA("BasePart") then
-		blockPart.Size = originalSize
+		blockPart.Size = Settings.originalSize
 	end
 end
 
--- Character reset handling (reset-proof feature)
 LocalPlayer.CharacterAdded:Connect(function()
-	if toggleBlockReach then
+	if Settings.toggleBlockReach then
 		task.wait(1) -- wait for the character to fully load
 		applyBlockReach()
 	end
 end)
 
+-- // See Team Chat
+
+local function SetupTeamChatLogger()
+    if not Settings.seeTeamChat then return end
+
+    Players.PlayerChatted:Connect(function(player, message, channel)
+        if channel == "Team" then
+            local tag = player.Team and player.Team.Name or "No Team"
+            local name = player.Name
+            local fullMessage = "[Team] " .. name .. " (" .. tag .. "): " .. message
+
+            -- Print to output (optional)
+            print(fullMessage)
+
+            -- Log into system chat
+            game.StarterGui:SetCore("ChatMakeSystemMessage", {
+                Text = fullMessage,
+                Color = Color3.fromRGB(100, 200, 255),
+                Font = Enum.Font.SourceSansBold,
+                TextSize = 18
+            })
+        end
+    end)
+end
+
+
+-- // No JumpCooldown
+
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+LocalPlayer.CharacterAdded:Connect(function(char)
+    Character = char
+end)
+
+local workspace = game:GetService("Workspace")
 local allowedPlaceIds = {
     [8204899140] = true,
     [17541256525] = true
 }
 
-local scrambleWall
-
 if allowedPlaceIds[game.PlaceId] then
-    scrambleWall = workspace:WaitForChild("ScrambleWall")
+    Settings.scrambleWall = workspace:WaitForChild("ScrambleWall")
 end
 
 local toggle = false
 local canCollideCheck = true -- Whether CanCollide should be checked
-
 -- Function to disable CanCollide
 local function disableCanCollide()
     if scrambleWall and scrambleWall:IsA("BasePart") then
@@ -329,67 +467,7 @@ local function disableCanCollide()
     end
 end
 
--- // Feature Toggles and Sliders
-local walkSpeedEnabled = false
-local walkSpeedValue = 20
-
-local jumpPowerEnabled = false
-local jumpPowerValue = 50
-
-local noMoveRestrictions = false
-local autoCaptainActive = false
-
--- // CFrame Pull Function
-
-local function pullToFootball()
-    task.spawn(function()
-        while pullEnabled do
-            task.wait(0.1)
-
-            local character = Player.Character
-            if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
-
-            local hasFootball = character:FindFirstChild("Football") ~= nil
-            if hasFootball then
-                lastPossessTime = tick()
-            elseif tick() - lastPossessTime < 1 then
-                continue -- wait 1 sec after losing football
-            end
-
-            local closestFootball
-            local shortestDistance = pullDistance
-
-            for _, obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and obj.Name == "Football" then
-                    local possessed = false
-                    local current = obj.Parent
-                    while current do
-                        if current:FindFirstChild("Humanoid") then
-                            possessed = true
-                            break
-                        end
-                        current = current.Parent
-                    end
-
-                    if not possessed then
-                        local dist = (character.HumanoidRootPart.Position - obj.Position).Magnitude
-                        if dist < shortestDistance then
-                            shortestDistance = dist
-                            closestFootball = obj
-                        end
-                    end
-                end
-            end
-
-            if closestFootball then
-                if pullDelayEnabled then task.wait(pullDelayAmount) end
-                character:MoveTo(closestFootball.Position)
-            end
-        end
-    end)
-end
-
--- // Apply Settings Function
+-- // WalkSpeed, JumpPower and No Move Restrictions Logic
 local function applySettings()
     local character = game:GetService("Players").LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
@@ -398,23 +476,23 @@ local function applySettings()
         -- Check if WalkSpeed is 0 (movement restricted)
         if humanoid.WalkSpeed == 0 then
             -- If No Move Restrictions is off and WalkSpeed is enabled, restrict movement
-            if walkSpeedEnabled and not noMoveRestrictions then
+            if Settings.walkSpeedEnabled and not Settings.noMoveRestrictions then
                 humanoid.WalkSpeed = 0 -- Prevent movement if WalkSpeed is enabled and No Move Restrictions is off
-            elseif walkSpeedEnabled or noMoveRestrictions then
+            elseif Settings.walkSpeedEnabled or Settings.noMoveRestrictions then
                 humanoid.WalkSpeed = 20 -- Allow movement if bypassed by No Move Restrictions or WalkSpeedEnabled
             end
             humanoid.JumpPower = 50 -- Always default jump during restricted movement
         else
             -- If movement is not restricted (WalkSpeed > 0)
-            if walkSpeedEnabled then
-                humanoid.WalkSpeed = walkSpeedValue -- Apply custom WalkSpeed if enabled
+            if Settings.walkSpeedEnabled then
+                humanoid.WalkSpeed = Settings.walkSpeedValue -- Apply custom WalkSpeed if enabled
             else
                 humanoid.WalkSpeed = 20 -- Default WalkSpeed when disabled
             end
 
             -- Apply JumpPower settings
-            if jumpPowerEnabled then
-                humanoid.JumpPower = jumpPowerValue -- Custom JumpPower if enabled
+            if Settings.jumpPowerEnabled then
+                humanoid.JumpPower = Settings.jumpPowerValue -- Custom JumpPower if enabled
             else
                 humanoid.JumpPower = 50 -- Default JumpPower when disabled
             end
@@ -422,12 +500,37 @@ local function applySettings()
     end
 end
 
+local function setupNoJumpCooldown()
+    if typeof(Settings.jumpConnection) == "RBXScriptConnection" then
+        Settings.jumpConnection:Disconnect()
+        Settings.jumpConnection = nil
+    end
 
+    if Settings.noJumpCooldownEnabled then
+        Settings.jumpConnection = UserInputService.JumpRequest:Connect(function()
+            local character = LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+            if not humanoid then return end
 
--- Function to find the player holding the football
+            task.wait()
+
+            if not Settings.jumpCooldownActive and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                Settings.jumpCooldownActive = true
+                Settings.lastFakeJumpTime = tick()
+
+                task.delay(Settings.jumpCooldownWait, function()
+                    Settings.jumpCooldownActive = false
+                end)
+            end
+        end)
+    end
+end
+
+-- // Auto Rush
 local function findFootballHolder()
     for _, player in pairs(Players:GetPlayers()) do
-        if player.Team ~= LocalPlayer.Team then -- 🛑 Make sure player is NOT on your team
+        if player.Team ~= LocalPlayer.Team then
             if player.Character and player.Character:FindFirstChild("Football") then
                 return player
             end
@@ -441,8 +544,8 @@ local function predictPosition(targetHrp, timeAhead)
     return targetHrp.Position + (targetVelocity * timeAhead)
 end
 
-local function autoRush(delay)
-    while autoRushEnabled do
+local function autoRush()
+    while Settings.autoRushEnabled do
         local footballHolder = findFootballHolder()
         if footballHolder then
             local character = LocalPlayer.Character
@@ -450,7 +553,7 @@ local function autoRush(delay)
             local targetHrp = footballHolder.Character and footballHolder.Character:FindFirstChild("HumanoidRootPart")
 
             if hrp and targetHrp then
-                local predictedPosition = predictPosition(targetHrp, delay)
+                local predictedPosition = predictPosition(targetHrp, Settings.autoRushDelay)
                 if predictedPosition.Magnitude > 0 then
                     character.Humanoid:MoveTo(predictedPosition)
                 end
@@ -465,597 +568,910 @@ local function autoRush(delay)
     end
 end
 
+local isOnCooldown = false
+
+local function handleQuickTP()
+    if isOnCooldown then return end
+    if Settings.quickTPEnabled then
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = character.HumanoidRootPart
+            humanoidRootPart.CFrame = humanoidRootPart.CFrame + humanoidRootPart.CFrame.LookVector * Settings.tpDistance
+            isOnCooldown = true
+            task.delay(0.4, function()
+                isOnCooldown = false
+            end)
+        end
+    end
+end
+
+local function onInputBegan(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Settings.tpKey then
+        handleQuickTP()
+    end
+end
+
 
 -- // Library
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/sdadas"))()
-local Main = Library:Create("Celaris", "Football Fusion")
 
-local CatchingTab = Main:CreateSection("Catching")
-local AutomaticsTab = Main:CreateSection("Automatics")
-local PlayersTab = Main:CreateSection("Player")
-local VisualsTab = Main:CreateSection("Visuals")
-local SettingsTab = Main:CreateSection("Settings")
+loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/LoadingScreen")()
+-- Wait for the GUI to load (loaded from URL)
+wait(1)
+
+-- Find the GUI manually
+local screenGui = game:GetService("CoreGui"):FindFirstChild("ScreenGui")
+if not screenGui then
+    warn("Loading Screen not found.")
+    return
+end
+
+-- Wait for the elements to appear
+local main = screenGui.Main
+local executorLabel = main.Executor
+local loadingLabel = main.Loading
+
+-- Set executor name
+local exc = getexecutorname()
+executorLabel.Text = "Executor: " .. exc
+loadingLabel.Font = Enum.Font.GothamBold
+
+
+wait(7.25)
+
+showNotification("Celaris V2", "Last Update: 5/12/2025", 5, "Celaris")
+local games = {
+    ["Practice"] = 14259168147,
+    ["Noob Servers"] = 8204899140,
+    ["Pro Servers"] = 17541256525
+}
+if game.PlaceId == games["Practice"] then
+    showNotification("Football Fusion", "Mode: Practice", 5, "FF2Logo")
+elseif game.PlaceId == games["Noob Servers"] then
+    showNotification("Football Fusion", "Mode: Noob Servers", 5, "FF2Logo")
+elseif game.PlaceId == games["Pro Servers"] then
+    showNotification("Football Fusion", "Mode: Pro Servers", 5, "FF2Logo")
+elseif not games[game.PlaceId] then
+    showNotification("Unsupported Game", "Mode: Unknown", 5, "Error")
+end
+--[[local allowedPlaces = {
+    [8206123457] = true,
+    [8204899140] = true,
+    [17541256525] = true
+}
+
+if not allowedPlaces[game.PlaceId] then
+    game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+end]]
+
+local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
+local keybind = Settings.keysus
+local win = lib:Window("Celaris | Football Fusion", Color3.fromRGB(255, 104, 104))
+
+local CatchingTab = win:Tab("Catching")
+local PlayersTab = win:Tab("Player")
+local AutomaticsTab = win:Tab("Automatics")
+local DefenseTab = win:Tab("Defense")
+local KickerTab = win:Tab("Kicking")
+local VisualsTab = win:Tab("Visuals")
+local TeleportsTab = win:Tab("Teleports")
+local SettingsTab = win:Tab("Config")
+
+-- // Teleports Tab
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local PlaceID = game.PlaceId
+local JobID = game.JobId
+local AllIDs = {}
+local currentHour = os.date("!*t").hour
+
+-- Load or create file
+local success, data = pcall(function()
+    return HttpService:JSONDecode(readfile("NotSameServers.json"))
+end)
+
+if success and type(data) == "table" then
+    AllIDs = data
+else
+    AllIDs = { currentHour }
+    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+end
+
+_G.PullVector = false
+_G.PullVectorDistance = 30
+_G.PullVectorForce = 100
+
+local character = game:GetService("Players").LocalPlayer.Character
+local humanoid = character:FindFirstChild("Humanoid")
+local ballCaught = false
+local connection
+
+local function pullVectorLogic()
+    if connection then
+        connection:Disconnect()
+    end
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        if _G.PullVector and not ballCaught then
+            for _, v in ipairs(workspace:GetChildren()) do
+                if v:IsA("Part") and v.Name == "Football" and v.Velocity.Magnitude > 2 then -- Ensure the ball is a Part and not on the ground
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local distance = (v.Position - hrp.Position).Magnitude
+                        if distance < tonumber(_G.PullVectorDistance) and humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+                            local direction = (v.Position - hrp.Position).Unit
+                            hrp.Velocity = direction * tonumber(_G.PullVectorForce)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
 
 -- Catching Tab
-CatchingTab:CreateLabel("Catching")
-CatchingTab:CreateToggle("Ball Magnets", function(value)
-    Magnets = value
+CatchingTab:Toggle("Ball Magnets", false, function(value)
+    Settings.Magnets = value
+    if value == true then
+        showNotification("Ball Magnets", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Ball Magnets", "Status: Disabled", 2, "Warning")
+    end
 end)
 
-CatchingTab:CreateToggle("Show Hitbox", function(value)
-    ShowHitbox = value
-end)
-
-CatchingTab:CreateTextBox("Magnets Size", "Size (5-20)", function(v)
+CatchingTab:Textbox("Magnet Range", false, function(v)
     local num = tonumber(v)
 
-    if num and num >= 5 and num <= 20 then
-        Range = num
+    if num and num >= 4 and num <= 22 then
+        Settings.Range = num
 
-        -- Update sphere sizes
-        for _, v in workspace:GetDescendants() do
-            if v:IsA("BasePart") and v.Name == "RangeSphere" then
-                v.Size = Vector3.new(Range, Range, Range)
-            end
-        end
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Magnet Size Updated",
-                Text = "New Size: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Size",
-                Text = "Enter a number from 5 to 20",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-CatchingTab:CreateToggle("Magnet Delay", function(value)
-    UseMagnetDelay = value
-end)
-
-CatchingTab:CreateTextBox("Delay Amount", "Delay (0.01 - 1)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 1 then
-        MagnetDelay = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Magnet Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 1",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-CatchingTab:CreateLabel("CFrame Pull")
-CatchingTab:CreateToggle("Enabled", function(value)
-    pullEnabled = value
-    if value then
-        pullToFootball()
-    end
-end)
-
-CatchingTab:CreateTextBox("Pull Distance", "5 - 15", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 5 and num <= 15 then
-        pullDistance = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Pull Distance Updated",
-                Text = "New Distance: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Distance",
-                Text = "Enter a number from 5 to 15",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-CatchingTab:CreateToggle("Pull Delay", function(value)
-    pullDelayEnabled = value
-end)
-
-CatchingTab:CreateTextBox("Delay", "Delay (0.01 - 1)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 1 then
-        pullDelayAmount = num
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Pull Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 1",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-CatchingTab:CreateLabel("Hitbox Settings")
-
-CatchingTab:CreateTextBox("Hitbox Color", "RGB CODE", function(v)
-    local r, g, b = v:match("(%d+),%s*(%d+),%s*(%d+)")
-    r, g, b = tonumber(r), tonumber(g), tonumber(b)
-
-    if r and g and b and r <= 255 and g <= 255 and b <= 255 then
-        HitboxColor = Color3.fromRGB(r, g, b)
-
-        -- Update all current spheres
-        for _, football in workspace:GetChildren() do
-            if football.Name == "Football" and football:IsA("BasePart") then
-                local sphere = football:FindFirstChild("RangeSphere")
+        -- Update football sphere sizes
+        for _, v in workspace:GetChildren() do
+            if v.Name == "Football" and v:IsA("BasePart") then
+                local sphere = v:FindFirstChild("RangeSphere")
                 if sphere then
-                    sphere.Color = HitboxColor
-                end
-            end
-        end
-
-        -- Notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Hitbox Color Updated",
-                Text = string.format("New Color: RGB(%d, %d, %d)", r, g, b),
-                Duration = 3
-            })
-        end)
-    else
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Input",
-                Text = "Please enter 3 numbers from 0-255 separated by commas",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-CatchingTab:CreateTextBox("Hitbox Transparency", "0 - 0.9", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0 and num <= 0.9 then
-        HitboxTransparency = num
-
-        -- Update all current spheres
-        for _, football in workspace:GetChildren() do
-            if football.Name == "Football" and football:IsA("BasePart") then
-                local sphere = football:FindFirstChild("RangeSphere")
-                if sphere then
-                    sphere.Transparency = ShowHitbox and HitboxTransparency or 1
+                    sphere.Size = Vector3.new(Settings.Range, Settings.Range, Settings.Range)
                 end
             end
         end
 
         -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Transparency Updated",
-                Text = "New Transparency: " .. num,
-                Duration = 3
-            })
-        end)
+        showNotification("Magnet Range Updated", "New Range: " .. num, 3, "Update")
     else
         -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Input",
-                Text = "Enter a number between 0 and 0.9",
-                Duration = 3
-            })
-        end)
+        showNotification("Invalid Range", "Enter a number from 4 to 22", 3, "Warning")
     end
 end)
 
 
--- // Automatics Tab
-
-AutomaticsTab:CreateLabel("Auto Catch")
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    autoCatchEnabled = value 
-end)
-AutomaticsTab:CreateTextBox("Catch Delay", "Delay (0.01 - 3)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 3 then
-        catchDelay = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Auto Catch Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
+CatchingTab:Toggle("Show Hitbox", false, function(value)
+    Settings.ShowHitbox = value
+    if value == true then
+        showNotification("Magnet Hitbox", "Status: Enabled", 2, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 3",
-                Duration = 3
-            })
-        end)
+        showNotification("Magnet Hitbox", "Status: Disabled", 2, "Warning")
     end
 end)
 
-AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 10 and num <= 50 then
-        maxAutoSwatDistance = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Max Swat Distance Updated",
-                Text = "New Distance: " .. num,
-                Duration = 3
-            })
-        end)
+CatchingTab:Toggle("Magnet Delay", false, function(v)
+    Settings.MagnetDelay = v
+    if value == true then
+        showNotification("Magnet Delay", "Status: Enabled", 2, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Distance",
-                Text = "Enter a number from 10 to 50",
-                Duration = 3
-            })
-        end)
+        showNotification("Magnet Delay", "Status: Disabled", 2, "Warning")
     end
 end)
 
-AutomaticsTab:CreateLabel("Auto Swat")
-
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    autoSwatEnabled = value 
-end)
-AutomaticsTab:CreateTextBox("Swat Delay", "Delay (0.01 - 3)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 3 then
-        swatDelay = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Auto Swat Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 3",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-AutomaticsTab:CreateTextBox("Max Distance", "Amount (10-50)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 10 and num <= 50 then
-        maxAutoSwatDistance = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Max Swat Distance Updated",
-                Text = "New Distance: " .. num,
-                Duration = 3
-            })
-        end)
-    else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Distance",
-                Text = "Enter a number from 10 to 50",
-                Duration = 3
-            })
-        end)
-    end
-end)
-
-AutomaticsTab:CreateLabel("Auto Jump")
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    autoJumpEnabled = value 
-end)
-AutomaticsTab:CreateTextBox("Jump Delay", "Delay Number", function(v)
+CatchingTab:Textbox("Delay Amount", false, function(v)
     local num = tonumber(v)
 
     if num and num >= 0.01 and num <= 1 then
-        jumpDelay = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Auto Jump Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
+        Settings.MagnetDelay = num
+
+        -- Success custom notification
+        showNotification("Magnet Delay Updated", "New Delay: " .. num, 3, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 1",
-                Duration = 3
-            })
-        end)
+        -- Error custom notification
+        showNotification("Invalid Delay", "Enter a number from 0.01 to 1", 3, "Warning")
     end
 end)
 
-AutomaticsTab:CreateTextBox("Jump Max Distance", "Max Dist. Number", function(v)
+CatchingTab:Colorpicker("Hitbox Color", Settings.HitboxColor, function(t)
+    local r = math.floor(t.R * 255)
+    local g = math.floor(t.G * 255)
+    local b = math.floor(t.B * 255)
+
+    Settings.HitboxColor = Color3.fromRGB(r, g, b)
+
+    -- Update all current spheres
+    for _, football in workspace:GetChildren() do
+        if football.Name == "Football" and football:IsA("BasePart") then
+            local sphere = football:FindFirstChild("RangeSphere")
+            if sphere then
+                sphere.Color = Settings.HitboxColor
+            end
+        end
+    end
+end)
+
+CatchingTab:Toggle("Pull Vector", false, function(value)
+    _G.PullVector = value
+    if _G.PullVector then
+        pullVectorLogic()
+    else
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+    end
+    if value == true then
+        showNotification("Pull Vector", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Pull Vector", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+CatchingTab:Textbox("Pull Vector Distance", false, function(v)
     local num = tonumber(v)
 
-    if num and num >= 10 and num <= 50 then
-        jumpMaxDistance = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Jump Max Distance Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
+    if num and num >= 5 and num <= 30 then
+        _G.PullVectorDistance = num
+        showNotification("Pull Vector Distance Updated", "New Distance: " .. num, 3, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 10 to 50",
-                Duration = 3
-            })
-        end)
+        showNotification("Invalid Distance", "Enter a number from 5 to 30", 3, "Warning")
     end
 end)
 
-AutomaticsTab:CreateLabel("Auto Get Up")
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    noRagdollEnabled = value
-end)
 
-AutomaticsTab:CreateLabel("Reset After Catch")
-
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    resetAfterCatchEnabled = value 
-end)
-
-AutomaticsTab:CreateTextBox("RAC Delay", "Delay (0.01 - 2)", function(v)
+CatchingTab:Textbox("Pull Vector Force", false, function(v)
     local num = tonumber(v)
 
-    if num and num >= 0.01 and num <= 2 then
-        catchDelay = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "RAC Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
+    if num and num >= 10 and num <= 100 then
+        _G.PullVectorForce = num
+        showNotification("Pull Vector Force Updated", "New Force: " .. num, 3, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 2",
-                Duration = 3
-            })
-        end)
+        showNotification("Invalid Force", "Enter a number from 10 to 100", 3, "Warning")
     end
 end)
 
-AutomaticsTab:CreateLabel("Auto QB")
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    autoQBEnabled = value 
-end)
+-- // Players Tab
 
-AutomaticsTab:CreateLabel("Auto Rush")
-AutomaticsTab:CreateToggle("Enabled", function(value)
-    autoRushEnabled = value
-    if value then
-        spawn(function()
-            autoRush(autoRushDelay)
-        end)
+PlayersTab:Toggle("WalkSpeed", false, function(value)
+    Settings.walkSpeedEnabled = value
+    if value == false then
+        Players.LocalPlayer.Character.Humanoid.WalkSpeed = 20
     end
-end)
-
-AutomaticsTab:CreateTextBox("Rush Delay", "Delay (0.01 - 1)", function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 1 then
-        autoRushDelay = num
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Auto-Rush Delay Updated",
-                Text = "New Delay: " .. num,
-                Duration = 3
-            })
-        end)
+    if value == true then
+        showNotification("WalkSpeed", "Status: Enabled", 2, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid Delay",
-                Text = "Enter a number from 0.01 to 1",
-                Duration = 3
-            })
-        end)
+        showNotification("WalkSpeed", "Status: Disabled", 2, "Warning")
     end
 end)
 
-
--- Player Tab:
-
-PlayersTab:CreateLabel("Player")
-PlayersTab:CreateToggle("WalkSpeed", function(value)
-    walkSpeedEnabled = value
-end)
-
-PlayersTab:CreateTextBox("Walkspeed Amount", "Amount (20-23)", function(v)
+PlayersTab:Textbox("WalkSpeed Amount", false, function(v)
     local num = tonumber(v)
 
     if num and num >= 20 and num <= 23 then
-        walkSpeedValue = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "WalkSpeed Updated",
-                Text = "New WalkSpeed: " .. num,
-                Duration = 3
-            })
-        end)
+        Settings.walkSpeedValue = num
+        showNotification("WalkSpeed Updated", "New Speed: " .. num, 3, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid WalkSpeed",
-                Text = "Enter a number from 20 to 23",
-                Duration = 3
-            })
-        end)
+        showNotification("Invalid WalkSpeed", "Enter a number from 20 to 23", 3, "Warning")
     end
 end)
 
-PlayersTab:CreateToggle("JumpPower", function(value)
-    jumpPowerEnabled = value
+
+PlayersTab:Toggle("JumpPower", false, function(value)
+    Settings.jumpPowerEnabled = value
+    if value == false then 
+        Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+    if value == true then
+        showNotification("JumpPower", "Status: Enabled", 2, "Update")
+    else
+        showNotification("JumpPower", "Status: Disabled", 2, "Warning")
+    end
 end)
 
-PlayersTab:CreateTextBox("JumpPower Amount", "Amount (50-60)", function(v)
+PlayersTab:Textbox("JumpPower Amount", false, function(v)
     local num = tonumber(v)
 
     if num and num >= 50 and num <= 60 then
-        jumpPowerValue = num
-
-        -- Success notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "JumpPower Updated",
-                Text = "New JumpPower: " .. num,
-                Duration = 3
-            })
-        end)
+        Settings.jumpPowerValue = num
+        showNotification("JumpPower Updated", "New Power: " .. num, 3, "Update")
     else
-        -- Error notification
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "Invalid JumpPower",
-                Text = "Enter a number from 50 to 60",
-                Duration = 3
-            })
-        end)
+        showNotification("Invalid JumpPower", "Enter a number from 50 to 60", 3, "Warning")
+    end
+end)
+
+PlayersTab:Toggle("No Move Restrictions", false, function(value)
+    Settings.noMoveRestrictions = value
+    if value == true then
+        showNotification("No Move Restrictions", "Status: Enabled", 2, "Update")
+    else
+        showNotification("No Move Restrictions", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+PlayersTab:Toggle("No Jump Cooldown", false, function(value)
+    Settings.noJumpCooldownEnabled = value
+    setupNoJumpCooldown()
+    if value == true then
+        showNotification("No Jump Cooldown", "Status: Enabled", 2, "Update")
+    else
+        showNotification("No Jump Cooldown", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+-- // Defense Tab
+local function createMobileQuickTPButton()
+    local screenGui = Instance.new("ScreenGui")
+    local stroke = Instance.new("UIStroke")
+    local corner = Instance.new("UICorner")
+    local button = Instance.new("TextButton")
+    screenGui.Parent = game:GetService("CoreGui")
+    screenGui.Name = "MobileQuickTPUI"
+    button.Size = UDim2.fromOffset(120, 60)
+    button.Position = UDim2.fromScale(0.5, 0.9) - UDim2.fromOffset(60, 30)
+    button.Text = "Quick TP"
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BackgroundColor3 = Color3.fromRGB(27, 27, 27)
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 18
+    button.AutoButtonColor = false
+    button.Visible = false
+    button.Parent = screenGui
+
+    corner.Parent = button
+    stroke.Parent = button
+
+    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Thickness = 1.5
+
+    corner.CornerRadius = UDim.new(0, 11)
+
+    return button
+end
+
+local MobileQuickTPButton = createMobileQuickTPButton()
+
+
+DefenseTab:Toggle("Quick TP", false, function(value)
+    Settings.quickTPEnabled = value
+    if value == true then
+        showNotification("Quick Teleport","Status: Enabled", 2, "Update")
+    else
+        showNotification("Quick Teleport", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+MobileQuickTPButton.MouseButton1Click:Connect(function()
+    if Settings.quickTPEnabled then
+        handleQuickTP()
+    end
+end)
+
+DefenseTab:Toggle("Mobile Quick TP Button", false, function(value)
+    MobileQuickTPButton.Visible = value
+    if value then
+        showNotification("Mobile Quick TP", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Mobile Quick TP", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+DefenseTab:Textbox("Quick TP Distance", false, function(v)
+    local num = tonumber(v)
+
+    if num and num >= 1 and num <= 5 then
+        Settings.tpDistance = num
+        showNotification("Quick TP Distance Updated", "New Distance: " .. num, 3, "Update")
+    else
+        showNotification("Invalid TP Distance", "Enter a number from 1 to 5", 3, "Warning")
     end
 end)
 
 
-PlayersTab:CreateLabel("Defense")
-
-PlayersTab:CreateToggle("Tackle Reach", function(value)
-    tackleReachEnabled = value
+DefenseTab:Dropdown("Quick TP Keybind", {"F", "T", "G", "E", "Z", "X"}, function(value)
+    Settings.tpKey = Enum.KeyCode[value]
 end)
 
-PlayersTab:CreateToggle("Block Reach", function(value)
-	toggleBlockReach = value
-	if toggleBlockReach then
-		applyBlockReach()
-	else
-		resetBlockReach()
+
+DefenseTab:Toggle("Block Reach", false, function(value)
+    Settings.toggleBlockReach = value
+    if Settings.toggleBlockReach == true then
+        applyBlockReach()
+    else
+        game:GetService("Players").LocalPlayer.Character:FindFirstChild("BlockPart").Size = Vector3.new(0.8500000238418579, 5, 1.5)
 	end
+    if value == true then
+        showNotification("Block Reach", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Block Reach", "Status: Disabled", 2, "Warning")
+    end
 end)
 
-PlayersTab:CreateTextBox("Reach Amount", "3 - 10", function(v)
-	local num = tonumber(v)
+DefenseTab:Textbox("Block Reach", false, function(v)
+    local num = tonumber(v)
 
-	if num and num >= 3 and num <= 10 then
-		blockReachAmount = num
+    if num and num >= 1 and num <= 15 then
+        Settings.blockReachAmount = num
+        showNotification("Block Reach Updated", "New Reach: " .. num, 3, "Update")
 
-		-- Apply instantly if toggle is on
-		if toggleBlockReach then
-			applyBlockReach()
-		end
-
-		-- Success notification
-		pcall(function()
-			game:GetService("StarterGui"):SetCore("SendNotification", {
-				Title = "Reach Amount Updated",
-				Text = "New Amount: " .. num,
-				Duration = 3
-			})
-		end)
-	else
-		-- Error notification
-		pcall(function()
-			game:GetService("StarterGui"):SetCore("SendNotification", {
-				Title = "Invalid Amount",
-				Text = "Enter a number from 3 to 10",
-				Duration = 3
-			})
-		end)
-	end
-end)
-
-PlayersTab:CreateLabel("Miscellaneous")
-
-PlayersTab:CreateToggle("No Move Restrictions", function(value)
-    noMoveRestrictions = value
+        if Settings.toggleBlockReach then
+            applyBlockReach()
+        end
+    else
+        showNotification("Invalid Block Reach", "Enter a number from 1 to 15", 3, "Warning")
+    end
 end)
 
 
-
--- VisualsTab
-
-VisualsTab:CreateLabel("Visuals")
-VisualsTab:CreateToggle("Better FPS", function(value)
-    lowerGraphicsEnabled = value
-    handleGraphics(Player.Character, value)
+DefenseTab:Toggle("Tackle Reach", false, function(value)
+    Settings.tackleReachEnabled = value
+    if value == true then
+        showNotification("Tackle Reach", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Tackle Reach", "Status: Disabled", 2, "Warning")
+    end
 end)
 
-VisualsTab:CreateToggle("Hide Stadium", function(value)
+-- // Automatics Tab
+AutomaticsTab:Toggle("Auto Rush", false, function(value)
+    Settings.autoRushEnabled = value
+    if value then
+        coroutine.wrap(autoRush)()
+        showNotification("Auto Rush", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Rush", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+AutomaticsTab:Textbox("Auto Rush Delay", false, function(v)
+    local num = tonumber(v)
+    if num and num >= 0.01 and num <= 1 then
+        Settings.autoRushDelay = num
+        showNotification("Rush Delay Updated", "New Delay: " .. num, 2, "Update")
+    else
+        showNotification("Rush Delay Updated", "Enter a number from 0.01 to 1", 3, "Warning")
+    end
+end)
+
+AutomaticsTab:Toggle("Auto Catch", false, function(value)
+    Settings.autoCatchEnabled = value
+    if value == true then
+        showNotification("Auto Catch", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Catch", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+AutomaticsTab:Textbox("Auto Catch Delay", false, function(v)
+    local num = tonumber(v)
+    if num and num >= 0.01 and num <= 3 then
+        Settings.autoRushDelay = num
+        showNotification("Catch Delay Updated", "New Delay: " .. num, 2, "Update")
+    else
+        showNotification("Catch Delay Updated", "Enter a number from 0.01 to 3", 3, "Warning")
+    end
+end)
+
+AutomaticsTab:Textbox("Auto Catch Distance", false, function(v)
+    local num = tonumber(v)
+
+    if num and num >= 10 and num <= 50 then
+        Settings.maxAutoCatchDistance = num
+        showNotification("Auto Catch Distance Updated", "New Distance: " .. num, 3, "Update")
+    else
+        showNotification("Invalid Catch Distance", "Enter a number from 10 to 50", 3, "Warning")
+    end
+end)
+
+
+AutomaticsTab:Toggle("Auto Swat", false, function(value)
+    Settings.autoSwatEnabled = value
+    if value == true then
+        showNotification("Auto Swat", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Swat", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+AutomaticsTab:Textbox("Auto Swat Delay", false, function(v)
+    local num = tonumber(v)
+    if num and num >= 0.01 and num <= 3 then
+        Settings.swatDelay = num
+        showNotification("Swat Delay Updated", "New Delay: " .. num, 2, "Update")
+    else
+        showNotification("Swat Delay Updated", "Enter a number from 0.01 to 3", 3, "Warning")
+    end
+end)
+
+AutomaticsTab:Textbox("Auto Swat Distance", false, function(v)
+    local num = tonumber(v)
+
+    if num and num >= 10 and num <= 50 then
+        Settings.maxAutoSwatDistance = num
+        showNotification("Auto Swat Distance Updated", "New Distance: " .. num, 3, "Update")
+    else
+        showNotification("Invalid Swat Distance", "Enter a number from 10 to 50", 3, "Warning")
+    end
+end)
+
+AutomaticsTab:Toggle("Perfect Auto Jump", false, function(value)
+    Settings.autoJumpEnabled = value
+    if value == true then
+        showNotification("Perfect Auto Jump", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Perfect Auto Jump", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+getgenv().VIM = game:GetService("VirtualInputManager")
+getgenv().plr = game:GetService("Players").LocalPlayer
+getgenv().char = plr.Character
+
+plr.CharacterAdded:Connect(function(character)
+    char = character
+end)
+
+game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(child)
+    local hum = char:FindFirstChild("Humanoid")
+    if child.Name == "KickerGui" and char and hum and Settings.kickOn then
+        local cursor = child:FindFirstChild("Cursor", true)
+        local firstdone = false
+        local seconddone = false
+
+        -- Mode-based Y threshold
+        local targetScale = 0.897 -- Default to Perfect
+        if Settings.kickerMode == "Great" then
+            targetScale = 0.879
+        elseif Settings.kickerMode == "Mediocre" then
+            targetScale = 0.865
+        end
+
+        -- Kick Type logic
+        if Settings.kickType == "High" then
+            -- Press 'R' 3 times for High
+            for i = 1, 3 do
+                VIM:SendKeyEvent(true, Enum.KeyCode.R, false, nil)
+                task.wait(0.2)  -- Slight delay between presses
+                VIM:SendKeyEvent(false, Enum.KeyCode.R, false, nil)
+                task.wait(0.2)
+            end
+        elseif Settings.kickType == "Low" then
+            -- Press 'R' 5 times for Low
+            for i = 1, 5 do
+                VIM:SendKeyEvent(true, Enum.KeyCode.F, false, nil)
+                task.wait(0.2)
+                VIM:SendKeyEvent(false, Enum.KeyCode.F, false, nil)
+                task.wait(0.2)
+            end
+        end
+
+        VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+
+        repeat task.wait() until cursor.Position.Y.Scale <= 0.03
+
+        VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+        firstdone = true
+
+        if firstdone then
+            repeat task.wait() until cursor.Position.Y.Scale >= targetScale
+        end
+
+        VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+        seconddone = true
+
+        if seconddone and firstdone then
+            
+            task.wait(0.05)
+            VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+
+            -- Final confirmation click
+            task.wait(0.05) 
+            VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
+            print("Kick complete using mode:", Settings.kickerMode, "and type:", Settings.kickType)
+        end
+    end
+end)
+
+
+AutomaticsTab:Toggle("Auto Get Up", false, function(value)
+    Settings.noRagdollEnabled = value
+    if value == true then
+        showNotification("Auto Get Up", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Get Up", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+AutomaticsTab:Toggle("Auto QB", false, function(value)
+    Settings.autoQBEnabled = value 
+    if value == true then
+        showNotification("Auto QB", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto QB", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
+
+        if not Settings.tackleReachEnabled then continue end
+        local Player = game:GetService("Players").LocalPlayer
+        local myChar = Player.Character
+        if not myChar or not myChar:FindFirstChild("Torso") then continue end
+
+        for _, otherPlayer in pairs(Players:GetPlayers()) do
+            if otherPlayer ~= Player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("Football") then
+                local theirTorso = otherPlayer.Character:FindFirstChild("Torso")
+                if theirTorso then
+                    firetouchinterest(myChar.Torso, theirTorso, 0)
+                    firetouchinterest(myChar.Torso, theirTorso, 1)
+                end
+            end
+        end
+    end
+end)
+
+-- // Visuals Tab
+local Grapher = {}
+
+Grapher.Segment = Instance.new("Part")
+Grapher.Segment.Anchored = true
+Grapher.Segment.Transparency = 0.3
+Grapher.Segment.Color = Color3.fromRGB(255, 0, 0)
+Grapher.Segment.Material = Enum.Material.Neon
+Grapher.Segment.CanCollide = false
+Grapher.Segment.Size = Vector3.new(0.2, 0.2, 0.2)
+Grapher.Segment.Name = "BeamSegment"
+
+Grapher.Params = RaycastParams.new()
+Grapher.Params.IgnoreWater = true
+Grapher.Params.FilterType = Enum.RaycastFilterType.Whitelist
+
+Grapher.CastStep = 3 / 60
+Grapher.LastSavedPower = 60
+Grapher.SegmentLifetime = 8
+
+function Grapher:GetCollidables()
+    local Collidables = {}
+
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide == true then
+            table.insert(Collidables, part)
+        end
+    end
+    return Collidables
+end
+
+function Grapher:WipeMarkers()
+    for _, obj in pairs(workspace:GetChildren()) do
+        if obj.Name == "BeamSegment" then
+            obj:Destroy()
+        end
+    end
+end
+
+function Grapher:GetLanding(origin, velocity, target)
+    local elapsed = 0
+    local prevPos = origin
+
+    self.Params.FilterDescendantsInstances = self:GetCollidables()
+
+    local highlight = nil
+
+    if target then
+        for _, existing in ipairs(game.CoreGui:GetChildren()) do
+            if existing:IsA("Highlight") and existing.Adornee == target then
+                wait(4)
+                existing:Destroy()
+            end
+        end
+
+        highlight = Instance.new("Highlight", game.CoreGui)
+        highlight.Adornee = target
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Enabled = true
+        highlight.OutlineColor = Grapher.Segment.Color
+        highlight.OutlineTransparency = Grapher.Segment.Transparency
+        highlight.FillColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.7
+    end
+
+    while Grapher.VisualizerEnabled do
+        elapsed = elapsed + Grapher.CastStep
+        local nextPos = origin + velocity * elapsed - Vector3.new(0, 0.5 * 28 * elapsed ^ 2, 0)
+
+        local segment = self.Segment:Clone()
+        segment.Position = (prevPos + nextPos) / 2
+        segment.Size = Vector3.new(0.2, 0.2, (prevPos - nextPos).magnitude)
+        segment.CFrame = CFrame.new(prevPos, nextPos) * CFrame.new(0, 0, -segment.Size.Z / 2)
+        segment.Color = Grapher.Segment.Color
+        segment.Transparency = Grapher.Segment.Transparency
+        segment.Parent = workspace
+
+        task.delay(Grapher.SegmentLifetime, function()
+            if segment and segment.Parent then
+                segment:Destroy()
+            end
+        end)
+
+        prevPos = nextPos
+
+        if target and highlight and (target.Parent ~= workspace or not target:FindFirstChildOfClass("BodyForce")) then
+            highlight:Destroy()
+            self:WipeMarkers()
+            break
+        end
+
+        task.wait()
+    end
+end
+
+function Grapher:StartVisualizer()
+    Grapher.VisualizerEnabled = true
+end
+
+function Grapher:StopVisualizer()
+    Grapher.VisualizerEnabled = false
+    Grapher:WipeMarkers()
+end
+
+workspace.ChildAdded:Connect(function(child)
+    if child.Name == "Football" and child:IsA("BasePart") then
+        local connection
+        connection = child:GetPropertyChangedSignal("Velocity"):Connect(function()
+            if Grapher.VisualizerEnabled then
+                Grapher:GetLanding(child.Position, child.Velocity, child)
+            end
+            connection:Disconnect()
+        end)
+    end
+end)
+
+VisualsTab:Toggle("Visualize Ball Trajectory", false, function(value)
+    if value then
+        Grapher:StartVisualizer()
+    else
+        Grapher:StopVisualizer()
+    end
+    if value == true then
+        showNotification("Football Trajectory", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Football Trajectory", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+VisualsTab:Colorpicker("Trajectory Color", Settings.TrajectoryColor, function(t)
+    Grapher.Segment.Color = t
+
+    for _, child in ipairs(workspace:GetChildren()) do
+        if child.Name == "BeamSegment" then
+            child.Color = t
+            child.Transparency = 0
+        end
+    end
+
+    for _, highlight in ipairs(game.CoreGui:GetChildren()) do
+        if highlight:IsA("Highlight") and highlight.Adornee and highlight.Adornee.Name == "Football" then
+            highlight.OutlineColor = t
+            highlight.OutlineTransparency = 0
+            highlight.FillColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.7
+        end
+    end
+end)
+
+local JumpSpotVisualizer = {}
+
+JumpSpotVisualizer.Params = RaycastParams.new()
+JumpSpotVisualizer.Params.IgnoreWater = true
+JumpSpotVisualizer.Params.FilterType = Enum.RaycastFilterType.Whitelist
+JumpSpotVisualizer.CastStep = 3 / 60
+
+function JumpSpotVisualizer:GetCollidables()
+    local Collidables = {}
+    for _, part in ipairs(workspace:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide == true then
+            table.insert(Collidables, part)
+        end
+    end
+    return Collidables
+end
+
+function JumpSpotVisualizer:GetLandingSpot(origin, velocity)
+    local elapsed = 0
+    local landed = false
+    local landingPos = origin
+
+    self.Params.FilterDescendantsInstances = self:GetCollidables()
+
+    while not landed do
+        elapsed += self.CastStep
+        local nextPos = origin + velocity * elapsed - Vector3.new(0, 0.5 * 28 * elapsed ^ 2, 0)
+        local rayResult = workspace:Raycast(landingPos, (nextPos - landingPos), self.Params)
+
+        if rayResult then
+            landed = true
+            landingPos = rayResult.Position
+        else
+            landingPos = nextPos
+        end
+        task.wait()
+    end
+
+    local marker = Instance.new("Part")
+    marker.Anchored = true
+    marker.CanCollide = false
+    marker.Shape = Enum.PartType.Ball
+    marker.Material = Enum.Material.Neon
+    marker.Transparency = 0.4
+    marker.Color = Settings.LandingSpotColor
+    marker.Size = Vector3.new(5, 5, 5)
+    marker.Position = landingPos + Vector3.new(0, 0.75, 0)
+    marker.Name = "LandingSpot"
+    marker.Parent = workspace
+
+    task.delay(6, function()
+        if marker and marker.Parent then
+            marker:Destroy()
+        end
+    end)
+end
+
+workspace.ChildAdded:Connect(function(child)
+    if child.Name == "Football" and child:IsA("BasePart") then
+        local connection
+        connection = child:GetPropertyChangedSignal("Velocity"):Connect(function()
+            if Settings.visualizeJumpSpot then
+                JumpSpotVisualizer:GetLandingSpot(child.Position, child.Velocity)
+            end
+            connection:Disconnect()
+        end)
+    end
+end)
+
+VisualsTab:Toggle("Visualize Landing Spot", false, function(value)
+    Settings.visualizeJumpSpot = value
+    if value == true then
+        showNotification("Visualize Landing Spot", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Visualize Landing Spot", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+VisualsTab:Colorpicker("Landing Spot Color", Settings.LandingSpotColor, function(t)
+    Settings.LandingSpotColor = t
+
+    for _, child in ipairs(workspace:GetChildren()) do
+        if child.Name == "LandingSpot" then
+            child.Color = t
+        end
+    end
+end)
+
+VisualsTab:Toggle("Team Chat Spy", false, function(value)
+    Settings.seeTeamChat = value
+    if value then
+        SetupTeamChatLogger() -- call your existing function
+        showNotification("Team Chat Spy", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Team Chat Spy", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+VisualsTab:Toggle("Lower Graphics", false, function(value)
+    Settings.lowerGraphicsEnabled = value
+    handleGraphics(LocalPlayer.Character, value)
+    if value == true then
+        showNotification("Lower Graphics", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Lower Graphics", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+VisualsTab:Toggle("Hide Stadium", false, function(value)
     local stadium = workspace:FindFirstChild("Models").Stadium
     if stadium and stadium:IsA("Model") then
         if stadium.PrimaryPart then
@@ -1073,12 +1489,35 @@ VisualsTab:CreateToggle("Hide Stadium", function(value)
     end
 end)
 
-VisualsTab:CreateLabel("Weather Visuals")
-VisualsTab:CreateToggle("Remove Rain", function(value)
+VisualsTab:Toggle("Hide Weather", false, function(value)
     local weather = workspace:FindFirstChild("SkyWeather")
+    if not weather or not weather:IsA("BasePart") then return end
+
+    local snowEmitters = {}
+    for _, descendant in ipairs(weather:GetDescendants()) do
+        if descendant:IsA("ParticleEmitter") and descendant.Name == "Snow" then
+            table.insert(snowEmitters, descendant)
+        end
+    end
+
+    if value then
+        snowStates = {}
+        for _, snow in ipairs(snowEmitters) do
+            snowStates[snow] = snow.Enabled
+            if snow.Enabled then
+                snow.Enabled = false
+            end
+        end
+    else
+        for snow, wasEnabled in pairs(snowStates) do
+            if snow and snow:IsDescendantOf(workspace) and wasEnabled then
+                snow.Enabled = true
+            end
+        end
+    end
+
     local sounds = workspace:FindFirstChild("Sounds")
 
-    -- Handle Rain Particles
     if weather and weather:IsA("BasePart") then
         local rain = weather:FindFirstChild("Rain")
         if rain and rain:IsA("ParticleEmitter") then
@@ -1111,132 +1550,46 @@ VisualsTab:CreateToggle("Remove Rain", function(value)
     end
 end)
 
-local snowStates = {} -- Table to track original states
-
-VisualsTab:CreateToggle("Remove Snow", function(value)
-    local weather = workspace:FindFirstChild("SkyWeather")
-    if not weather or not weather:IsA("BasePart") then return end
-
-    -- Get all descendants named "Snow" that are ParticleEmitters
-    local snowEmitters = {}
-    for _, descendant in ipairs(weather:GetDescendants()) do
-        if descendant:IsA("ParticleEmitter") and descendant.Name == "Snow" then
-            table.insert(snowEmitters, descendant)
+local function handleTrail(ball)
+    if ball:IsA("BasePart") and ball.Name == "Football" then
+        local trail = ball:FindFirstChildOfClass("Trail")
+        if trail then
+            trail.Enabled = not Settings.removeBallTrail
         end
     end
+end
 
+-- Listen for new Footballs added to workspace
+workspace.ChildAdded:Connect(function(child)
+    if child:IsA("BasePart") and child.Name == "Football" then
+        child:GetPropertyChangedSignal("Parent"):Connect(function()
+            handleTrail(child)
+        end)
+        task.wait(0.1) -- small delay to ensure the trail exists
+        handleTrail(child)
+    end
+end)
+
+VisualsTab:Toggle("Remove Ball Trail", false, function(value)
+    Settings.removeBallTrail = value
+    for _, obj in ipairs(workspace:GetChildren()) do
+        if obj:IsA("BasePart") and obj.Name == "Football" then
+            handleTrail(obj)
+        end
+    end
     if value then
-        -- Toggle ON: Store state & disable active ones
-        snowStates = {}
-        for _, snow in ipairs(snowEmitters) do
-            snowStates[snow] = snow.Enabled
-            if snow.Enabled then
-                snow.Enabled = false
-            end
-        end
+        showNotification("Remove Ball Trail", "Status: Enabled", 2, "Update")
     else
-        -- Toggle OFF: Re-enable only those that were originally enabled
-        for snow, wasEnabled in pairs(snowStates) do
-            if snow and snow:IsDescendantOf(workspace) and wasEnabled then
-                snow.Enabled = true
-            end
-        end
+        showNotification("Remove Ball Trail", "Status: Disabled", 2, "Warning")
     end
 end)
 
-VisualsTab:CreateLabel("Miscellaneous")
-VisualsTab:CreateToggle("Remove QB Boundaries", function(value)
+VisualsTab:Toggle("Remove QB Boundaries", false, function(value)
     toggle = value
-end)
-
--- Source
-
-
-
-task.spawn(function()
-    while true do
-        task.wait()
-
-        if autoCatchEnabled then
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-
-            local closest, closestDist = nil, math.huge
-            for _, v in workspace:GetChildren() do
-                if v.Name == "Football" and v:IsA("BasePart") then
-                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
-                    if dist < closestDist then
-                        closest = v
-                        closestDist = dist
-                    end
-                end
-            end
-
-            if closest and closestDist <= maxAutoCatchDistance then
-                task.wait(catchDelay)
-
-                local targetKey = Enum.KeyCode.C
-                game:GetService("VirtualInputManager"):SendKeyEvent(true, targetKey, false, game)
-                task.wait(0.1)
-                game:GetService("VirtualInputManager"):SendKeyEvent(false, targetKey, false, game)
-            end
-        end
-    end
-end)
-
-
--- // Remove the sphere when the football disappears from the workspac
-
-task.spawn(function()
-    while true do
-        task.wait()
-
-        if autoSwatEnabled then
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-
-            local closest, closestDist = nil, math.huge
-            for _, v in workspace:GetChildren() do
-                if v.Name == "Football" and v:IsA("BasePart") then
-                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
-                    if dist < closestDist then
-                        closest = v
-                        closestDist = dist
-                    end
-                end
-            end
-
-            if closest and closestDist <= maxAutoSwatDistance then
-                task.wait(swatDelay)
-
-                local vim = game:GetService("VirtualInputManager")
-                vim:SendKeyEvent(true, Enum.KeyCode.R, false, game)
-                task.wait(0.1)
-                vim:SendKeyEvent(false, Enum.KeyCode.R, false, game)
-            end
-        end
-    end
-end)
-
-local lastHadFootball = false
-
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-
-        if resetAfterCatchEnabled then
-            local char = Player.Character
-            if char and char:FindFirstChild("Football") and not lastHadFootball then
-                lastHadFootball = true
-                task.wait(resetAfterCatchDelay)
-
-                if char:FindFirstChild("Humanoid") then
-                    char.Humanoid.Health = 0
-                end
-            elseif char and not char:FindFirstChild("Football") then
-                lastHadFootball = false
-            end
-        end
+    if value == true then
+        showNotification("Remove QB Boundaries", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Remove QB Boundaries", "Status: Disabled", 2, "Warning")
     end
 end)
 
@@ -1244,74 +1597,7 @@ task.spawn(function()
     while true do
         task.wait()
 
-        if autoQBEnabled then
-            local char = Player.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then continue end
-
-            local closest, closestDist = nil, math.huge
-            for _, v in workspace:GetChildren() do
-                if v.Name == "Football" and v:IsA("BasePart") then
-                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
-                    if dist <= 50 and dist < closestDist then
-                        closest = v
-                        closestDist = dist
-                    end
-                end
-            end
-
-            if closest then
-                char.Humanoid:MoveTo(closest.Position)
-            end
-        end
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-
-        if not tackleReachEnabled then continue end
-
-        local player = game:GetService("Players").LocalPlayer
-        local character = player.Character
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-        if not hrp then continue end
-
-        local closest, closestDist = nil, math.huge
-
-        for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
-            if plr ~= player and plr.Team ~= player.Team then  -- ✅ skip teammates
-                if plr.Character and plr.Character:FindFirstChild("Football") then
-                    local targetHRP = plr.Character:FindFirstChild("HumanoidRootPart")
-                    if targetHRP then
-                        local dist = (hrp.Position - targetHRP.Position).Magnitude
-                        if dist < closestDist then
-                            closestDist = dist
-                            closest = targetHRP
-                        end
-                    end
-                end
-            end
-        end
-
-        if closest and closestDist <= 5 then
-            local originalPos = hrp.CFrame
-            for _ = 1, 5 do
-                hrp.CFrame = closest.CFrame
-                task.wait(0.01)
-                hrp.CFrame = originalPos
-                task.wait(0.01)
-            end
-        end
-    end
-end)
-
--- // Magnet loop
-task.spawn(function()
-    while true do
-        task.wait()
-
-        if not Magnets then continue end
+        if not Settings.Magnets then continue end
         if not Character or not Character:FindFirstChild("CatchRight") or not Character:FindFirstChild("CatchLeft") then continue end
 
         for _, v in workspace:GetChildren() do
@@ -1322,12 +1608,12 @@ task.spawn(function()
                     sphere = Instance.new("Part")
                     sphere.Name = "RangeSphere"
                     sphere.Shape = Enum.PartType.Ball
-                    sphere.Size = Vector3.new(Range, Range, Range)
-                    sphere.Color = HitboxColor
-                    sphere.Transparency = ShowHitbox and HitboxTransparency or 1
+                    sphere.Size = Vector3.new(Settings.Range, Settings.Range, Settings.Range)
+                    sphere.Color = Settings.HitboxColor
+                    sphere.Transparency = Settings.ShowHitbox and Settings.HitboxTransparency or 1
                     sphere.CanCollide = false
                     sphere.Anchored = true
-                    sphere.Material = Enum.Material.Neon
+                    sphere.Material = Enum.Material.ForceField
                     sphere.Position = v.Position
                     sphere.Parent = v
 
@@ -1343,10 +1629,10 @@ task.spawn(function()
                 local distRight = (Character["CatchRight"].Position - sphere.Position).magnitude
                 local distLeft = (Character["CatchLeft"].Position - sphere.Position).magnitude
 
-                if distRight <= Range or distLeft <= Range then
+                if distRight <= Settings.Range or distLeft <= Settings.Range then
                     task.spawn(function()
-                        if UseMagnetDelay then
-                            task.wait(MagnetDelay)
+                        if Settings.UseMagnetDelay then
+                            task.wait(Settings.MagnetDelay)
                         end
                         firetouchinterest(Character["CatchRight"], v, 0)
                         firetouchinterest(Character["CatchLeft"], v, 0)
@@ -1359,6 +1645,7 @@ task.spawn(function()
     end
 end)
 
+
 workspace.ChildRemoved:Connect(function(child)
     if child.Name == "Football" and child:IsA("BasePart") then
         local sphere = child:FindFirstChild("RangeSphere")
@@ -1368,28 +1655,148 @@ workspace.ChildRemoved:Connect(function(child)
     end
 end)
 
-game:GetService("RunService").Heartbeat:Connect(function()
-    if walkSpeedEnabled or jumpPowerEnabled or noMoveRestrictions then
-        applySettings()
-    end
-end)
+-- Source
+UserInputService.InputBegan:Connect(onInputBegan)
 
 
 task.spawn(function()
     while true do
-        task.wait(0.05)
-
-        if noRagdollEnabled then
-            local character = game:GetService("Players").LocalPlayer.Character
-            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
-
-            if humanoid and humanoid.PlatformStand then
-                task.wait(0.6)
-                if noRagdollEnabled and humanoid.PlatformStand then
-                    humanoid.PlatformStand = false
+        task.wait()
+        if Settings.autoCatchEnabled then
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
                 end
             end
+            if closest and closestDist <= Settings.maxAutoCatchDistance then
+                task.wait(Settings.catchDelay)
+                local targetKey = Enum.KeyCode.C
+                game:GetService("VirtualInputManager"):SendKeyEvent(true, targetKey, false, game)
+                task.wait(0.1)
+                game:GetService("VirtualInputManager"):SendKeyEvent(false, targetKey, false, game)
+            end
         end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
+        if Settings.autoSwatEnabled then
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+            if closest and closestDist <= Settings.maxAutoSwatDistance then
+                task.wait(Settings.swatDelay)
+
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, Enum.KeyCode.R, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.R, false, game)
+            end
+        end
+    end
+end)
+
+-- // Remove the sphere when the football disappears from the workspac
+
+task.spawn(function()
+    while true do
+        task.wait()
+        if Settings.autoJumpEnabled then
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+            if closest and closestDist <= Settings.jumpMaxDistance then
+                task.wait(Settings.jumpDelay)
+
+                local vim = game:GetService("VirtualInputManager")
+                vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+
+        if Settings.resetAfterCatchEnabled then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Football") and not Settings.lastHadFootball then
+                Settings.lastHadFootball = true
+                task.wait(Settings.resetAfterCatchDelay)
+
+                if char:FindFirstChild("Humanoid") then
+                    char.Humanoid.Health = 0
+                end
+            elseif char and not char:FindFirstChild("Football") then
+                Settings.lastHadFootball = false
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait()
+        if Settings.autoQBEnabled then
+            local char = LocalPlayer.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then continue end
+            local closest, closestDist = nil, math.huge
+            for _, v in workspace:GetChildren() do
+                if v.Name == "Football" and v:IsA("BasePart") then
+                    local dist = (char.HumanoidRootPart.Position - v.Position).Magnitude
+                    if dist <= 50 and dist < closestDist then
+                        closest = v
+                        closestDist = dist
+                    end
+                end
+            end
+            if closest then
+                char.Humanoid:MoveTo(closest.Position)
+            end
+        end
+    end
+end)
+
+
+-- // Magnet loop
+
+
+
+
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if toggle and canCollideCheck then
+        disableCanCollide()
     end
 end)
 
@@ -1400,14 +1807,14 @@ function handleGraphics(char, low)
         if part:IsA("BasePart") then
             if low then
                 -- Store original material if not already stored
-                if not originalMaterials[part] then
-                    originalMaterials[part] = part.Material
+                if not Settings.originalMaterials[part] then
+                    Settings.originalMaterials[part] = part.Material
                 end
                 part.Material = Enum.Material.SmoothPlastic
             else
                 -- Revert to original material if it was stored
-                if originalMaterials[part] then
-                    part.Material = originalMaterials[part]
+                if Settings.originalMaterials[part] then
+                    part.Material = Settings.originalMaterials[part]
                 end
             end
         end
@@ -1419,108 +1826,255 @@ function handleGraphics(char, low)
     end
 end
 
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if Settings.walkSpeedEnabled == true or Settings.jumpPowerEnabled == true or Settings.noMoveRestrictions == true then
+        applySettings()
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+
+        if Settings.noRagdollEnabled then
+            local character = game:GetService("Players").LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildWhichIsA("Humanoid")
+
+            if humanoid and humanoid.PlatformStand then
+                task.wait(0.6)
+                if Settings.noRagdollEnabled and humanoid.PlatformStand then
+                    humanoid.PlatformStand = false
+                end
+            end
+        end
+    end
+end)
+
+
+
+TeleportsTab:Button("Pro Servers", function()
+    showNotification("Game Teleport", "Destination: Pro Servers", 3, "Teleport")
+    TeleportService:Teleport(17541256525, player)
+end)
+
+TeleportsTab:Button("Noob Servers", function()
+    showNotification("Game Teleport", "Destination: Noob Servers", 3, "Teleport")
+    TeleportService:Teleport(8204899140, player)
+end)
+
+TeleportsTab:Button("Practice Mode", function()
+    showNotification("Game Teleport", "Destination: Practice", 3, "Teleport")
+    TeleportService:Teleport(8206123457, player)
+end)
+
+TeleportsTab:Button("Rejoin Server", function()
+    showNotification("Game Teleport", "Destination: Same Server", 3, "Teleport")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) 
+end)
+
+TeleportsTab:Button("Join A New Server", function()
+    showNotification("Game Teleport", "Joining a new server...", 3, "Teleport")
+    local foundServer = false
+    local cursor = ""
+
+    while not foundServer do
+        local url = "https://games.roblox.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
+        if cursor ~= "" then url = url .. "&cursor=" .. cursor end
+
+        local response = HttpService:JSONDecode(game:HttpGet(url))
+        cursor = response.nextPageCursor or ""
+
+        for _, server in ipairs(response.data) do
+            local id = server.id
+
+            if server.playing >= 5 and server.playing < server.maxPlayers and id ~= JobID then
+                local alreadyJoined = false
+
+                -- Check cache
+                for _, cached in ipairs(AllIDs) do
+                    if tonumber(cached) ~= nil and tonumber(cached) ~= currentHour then
+                        -- Clear file if hour has changed
+                        delfile("NotSameServers.json")
+                        AllIDs = { currentHour }
+                        break
+                    end
+                    if id == cached then
+                        alreadyJoined = true
+                        break
+                    end
+                end
+
+                if not alreadyJoined then
+                    table.insert(AllIDs, id)
+                    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+                    TeleportService:TeleportToPlaceInstance(PlaceID, id, Players.LocalPlayer)
+                    foundServer = true
+                    break
+                end
+            end
+        end
+
+        if cursor == "" then break end
+    end
+end)
+
+KickerTab:Toggle("Auto Kicker", false, function(value)
+    Settings.kickOn = value
+    if value == true then
+        showNotification("Auto Kicker", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Auto Kicker", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+KickerTab:Dropdown("Auto Kicker Mode", {"Perfect", "Great", "Mediocre"}, function(value)
+    Settings.kickerMode = value
+    if value then
+        showNotification("Kick Mode:", "Status: " .. value, 2, "Update")
+    else
+        showNotification("Kick Mode:", "Status: Not Identified", 3, "Error")
+    end
+end)
+
+KickerTab:Dropdown("Auto Kicker Type", {"High", "Normal", "Low"}, function(value)
+    Settings.kickType = value
+    if value then
+        showNotification("Kick Type:", "Status: " .. value, 2, "Update")
+    else
+        showNotification("Kick Type:", "Status: Not Identified", 3, "Error")
+    end
+end)
+
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- Function to apply the drag system
-local function applyDragSystem()
-	wait(1) -- Delay so everything is loaded
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Settings.keysus then
+        local ui = CoreGui:FindFirstChild("name")
+        if ui and ui:IsA("ScreenGui") then
+            ui.Enabled = not ui.Enabled
+        end
+    end
+end)
 
-	for _, gui in pairs(CoreGui:GetChildren()) do
-		if gui:IsA("ScreenGui") and gui.Name == "name" then
-			local MainLib = gui:FindFirstChild("MainLib")
-			if MainLib then
-				local dragging = false
-				local dragStart, startPos
+local gang = game:GetService("CoreGui")
+local gangbang = gang:FindFirstChild("name").Main
+local stroke = gangbang:FindFirstChild("UIStroke")
+local corner = gangbang:FindFirstChild("UICorner")
 
-				local function update(input)
-					local delta = input.Position - dragStart
-					MainLib.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-				end
+stroke.Color = Color3.fromRGB(255, 104, 104)
+stroke.Thickness = 1.35
+corner.CornerRadius = UDim.new(0, 12)
+local gg = gang:WaitForChild("name")
+gg:FindFirstChild("Main").Size = UDim2.new(0, 560, 0, 340)
 
-				MainLib.InputBegan:Connect(function(input)
-					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						dragging = true
-						dragStart = input.Position
-						startPos = MainLib.Position
 
-						input.Changed:Connect(function()
-							if input.UserInputState == Enum.UserInputState.End then
-								dragging = false
-							end
-						end)
-					end
-				end)
+TeleportsTab:Button("Noob Servers", function()
+    showNotification("Game Teleport", "Destination: Noob Servers", 3, "Teleport")
+    TeleportService:Teleport(8204899140, player)
+end)
 
-				UserInputService.InputChanged:Connect(function(input)
-					if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-						update(input)
-					end
-				end)
-			end
-		end
-	end
-end
+TeleportsTab:Button("Practice Mode", function()
+    showNotification("Game Teleport", "Destination: Practice", 3, "Teleport")
+    TeleportService:Teleport(8206123457, player)
+end)
 
-applyDragSystem()
+TeleportsTab:Button("Rejoin Server", function()
+    showNotification("Game Teleport", "Destination: Same Server", 3, "Teleport")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) 
+end)
 
-SettingsTab:CreateLabel("Settings")
+TeleportsTab:Button("Join A New Server", function()
+    showNotification("Game Teleport", "Joining a new server...", 3, "Teleport")
+    local foundServer = false
+    local cursor = ""
 
-local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
+    while not foundServer do
+        local url = "https://games.roblox.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
+        if cursor ~= "" then url = url .. "&cursor=" .. cursor end
 
--- Set your main UI name here:
+        local response = HttpService:JSONDecode(game:HttpGet(url))
+        cursor = response.nextPageCursor or ""
+
+        for _, server in ipairs(response.data) do
+            local id = server.id
+
+            if server.playing >= 5 and server.playing < server.maxPlayers and id ~= JobID then
+                local alreadyJoined = false
+
+                -- Check cache
+                for _, cached in ipairs(AllIDs) do
+                    if tonumber(cached) ~= nil and tonumber(cached) ~= currentHour then
+                        -- Clear file if hour has changed
+                        delfile("NotSameServers.json")
+                        AllIDs = { currentHour }
+                        break
+                    end
+                    if id == cached then
+                        alreadyJoined = true
+                        break
+                    end
+                end
+
+                if not alreadyJoined then
+                    table.insert(AllIDs, id)
+                    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+                    TeleportService:TeleportToPlaceInstance(PlaceID, id, Players.LocalPlayer)
+                    foundServer = true
+                    break
+                end
+            end
+        end
+
+        if cursor == "" then break end
+    end
+end)
+
 local mainUi = CoreGui:FindFirstChild("name")
 
--- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MobileToggleUI"
 screenGui.IgnoreGuiInset = true
 screenGui.ResetOnSpawn = false
 screenGui.Parent = CoreGui
 
--- Create TextButton
 local button = Instance.new("TextButton")
 button.Name = "ToggleUIButton"
 button.Size = UDim2.new(0.12, 0, 0.05, 0)
 button.Position = UDim2.new(0.44, 0, 0.02, 0)
 button.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.Font = Enum.Font.GothamMedium -- closest to Montserrat in Roblox
+button.Font = Enum.Font.GothamMedium
 button.TextScaled = true
 button.Text = "Open"
 button.Parent = screenGui
 
--- Make it draggable
 button.Active = true
 button.Draggable = true
 
--- Add rounded corners
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 6)
 corner.Parent = button
 
--- Update button text depending on UI visibility
 local function updateButtonText()
-	if mainUi and mainUi.Enabled then
-		button.Text = "Close"
-	else
-		button.Text = "Open"
-	end
+    if mainUi and mainUi.Enabled then
+        button.Text = "Close"
+    else
+        button.Text = "Open"
+    end
 end
 
--- Button logic
 button.MouseButton1Click:Connect(function()
-	if mainUi then
-		mainUi.Enabled = not mainUi.Enabled
-		updateButtonText()
-	end
+    if mainUi then
+        mainUi.Enabled = not mainUi.Enabled
+        updateButtonText()
+    end
 end)
 
--- Constantly check state
 task.spawn(function()
-	while true do
-		updateButtonText()
-		task.wait(0.5)
-	end
+    while true do
+        updateButtonText()
+        task.wait(0.5)
+    end
 end)
