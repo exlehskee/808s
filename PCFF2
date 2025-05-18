@@ -429,7 +429,7 @@ local function SetupTeamChatLogger()
             game.StarterGui:SetCore("ChatMakeSystemMessage", {
                 Text = fullMessage,
                 Color = Color3.fromRGB(100, 200, 255),
-                Font = Enum.Font.SourceSansBold,
+                Font = Enum.Font.Gotham,
                 TextSize = 18
             })
         end
@@ -489,7 +489,7 @@ local function applySettings()
 
             if Settings.angleEnhancerEnabled and holdingS and tick() - holdStart >= Settings.holdTime then
                 humanoid.JumpPower = 50 + Settings.angleBoost
-                boostEndTime = tick() + 0.1
+                boostEndTime = tick() + 0.25
             elseif tick() <= boostEndTime then
                 humanoid.JumpPower = 50 + Settings.angleBoost
             elseif Settings.jumpPowerEnabled then
@@ -625,7 +625,7 @@ local loadingLabel = main.Loading
 
 -- Set executor name
 local exc = getexecutorname()
-executorLabel.Text = "Executor: " .. exc
+executorLabel.Text = "Executor: " .. exc .. " | Device: " .. UserInputService:GetPlatform().Name
 loadingLabel.Font = Enum.Font.GothamBold
 
 
@@ -1215,26 +1215,6 @@ function Grapher:GetLanding(origin, velocity, target)
 
     self.Params.FilterDescendantsInstances = self:GetCollidables()
 
-    local highlight = nil
-
-    if target then
-        for _, existing in ipairs(game.CoreGui:GetChildren()) do
-            if existing:IsA("Highlight") and existing.Adornee == target then
-                wait(4)
-                existing:Destroy()
-            end
-        end
-
-        highlight = Instance.new("Highlight", game.CoreGui)
-        highlight.Adornee = target
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Enabled = true
-        highlight.OutlineColor = Grapher.Segment.Color
-        highlight.OutlineTransparency = Grapher.Segment.Transparency
-        highlight.FillColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.7
-    end
-
     while Grapher.VisualizerEnabled do
         elapsed = elapsed + Grapher.CastStep
         local nextPos = origin + velocity * elapsed - Vector3.new(0, 0.5 * 28 * elapsed ^ 2, 0)
@@ -1255,8 +1235,7 @@ function Grapher:GetLanding(origin, velocity, target)
 
         prevPos = nextPos
 
-        if target and highlight and (target.Parent ~= workspace or not target:FindFirstChildOfClass("BodyForce")) then
-            highlight:Destroy()
+        if target and (target.Parent ~= workspace or not target:FindFirstChildOfClass("BodyForce")) then
             self:WipeMarkers()
             break
         end
@@ -1920,10 +1899,10 @@ local stroke = gangbang:FindFirstChild("UIStroke")
 local corner = gangbang:FindFirstChild("UICorner")
 
 stroke.Color = Color3.fromRGB(255, 104, 104)
-stroke.Thickness = 2
+stroke.Thickness = 1.35
 corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
-gg:WaitForChild("Main").Size = UDim2.new(0, 560, 0, 340)
+gg.Main.Size = UDim2.new(0, 560, 0, 340)
 
 SettingsTab:Textbox("UI Keybind", false, function(v)
     local success, key = pcall(function()
@@ -1937,4 +1916,3 @@ SettingsTab:Textbox("UI Keybind", false, function(v)
         showNotification("UI Keybind", "Put in a valid keybind!", 3, "Error")
     end
 end)
-print("Version 2.0.2")
