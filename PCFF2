@@ -351,11 +351,10 @@ local Settings = {
     originalSize = Vector3.new(0.8500000238418579, 5, 1.5),
     blockPartName = "BlockPart",
 
-    pullEnabled = false,
-    pullDistance = 10,
-    pullDelayEnabled = false,
-    pullDelayAmount = 0.1,
-    lastPossessTime = 0,
+    -- // Angle Enhancer
+    angleEnhancerEnabled = false,
+    holdTime = 1, -- default
+    angleBoost = 10,
     -- Jump Cooldown
     noJumpCooldownEnabled = false,
     lastFakeJumpTime = 0,
@@ -363,8 +362,8 @@ local Settings = {
     jumpConnection = nil,
 
     quickTPEnabled = false,
-    tpDistance = 5,
-    tpKey = Enum.KeyCode.F,
+    tpDistance = 1, -- default
+    tpKey = Enum.KeyCode.F, -- default
 
     kickOn = false,
     kickerMode = "Perfect",
@@ -456,8 +455,7 @@ if allowedPlaceIds[game.PlaceId] then
 end
 
 local toggle = false
-local canCollideCheck = true -- Whether CanCollide should be checked
--- Function to disable CanCollide
+local canCollideCheck = true 
 local function disableCanCollide()
     if scrambleWall and scrambleWall:IsA("BasePart") then
         if scrambleWall.CanCollide then
@@ -466,39 +464,55 @@ local function disableCanCollide()
     end
 end
 
--- // WalkSpeed, JumpPower and No Move Restrictions Logic
+local holdingS = false
+local holdStart = 0
+local boostEndTime = 0
+
 local function applySettings()
-    local character = game:GetService("Players").LocalPlayer.Character
+    local character = LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
         local humanoid = character.Humanoid
 
-        -- Check if WalkSpeed is 0 (movement restricted)
         if humanoid.WalkSpeed == 0 then
-            -- If No Move Restrictions is off and WalkSpeed is enabled, restrict movement
             if Settings.walkSpeedEnabled and not Settings.noMoveRestrictions then
-                humanoid.WalkSpeed = 0 -- Prevent movement if WalkSpeed is enabled and No Move Restrictions is off
+                humanoid.WalkSpeed = 0
             elseif Settings.walkSpeedEnabled or Settings.noMoveRestrictions then
-                humanoid.WalkSpeed = 20 -- Allow movement if bypassed by No Move Restrictions or WalkSpeedEnabled
+                humanoid.WalkSpeed = 20
             end
-            humanoid.JumpPower = 50 -- Always default jump during restricted movement
+            humanoid.JumpPower = 50
         else
-            -- If movement is not restricted (WalkSpeed > 0)
             if Settings.walkSpeedEnabled then
-                humanoid.WalkSpeed = Settings.walkSpeedValue -- Apply custom WalkSpeed if enabled
+                humanoid.WalkSpeed = Settings.walkSpeedValue
             else
-                humanoid.WalkSpeed = 20 -- Default WalkSpeed when disabled
+                humanoid.WalkSpeed = 20
             end
 
-            -- Apply JumpPower settings
-            if Settings.jumpPowerEnabled then
-                humanoid.JumpPower = Settings.jumpPowerValue -- Custom JumpPower if enabled
+            if Settings.angleEnhancerEnabled and holdingS and tick() - holdStart >= Settings.holdTime then
+                humanoid.JumpPower = 50 + Settings.angleBoost
+                boostEndTime = tick() + 0.1
+            elseif tick() <= boostEndTime then
+                humanoid.JumpPower = 50 + Settings.angleBoost
+            elseif Settings.jumpPowerEnabled then
+                humanoid.JumpPower = Settings.jumpPowerValue
             else
-                humanoid.JumpPower = 50 -- Default JumpPower when disabled
+                humanoid.JumpPower = 50
             end
         end
     end
 end
 
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.S then
+        holdingS = true
+        holdStart = tick()
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.S then
+        holdingS = false
+    end
+end)
 local function setupNoJumpCooldown()
     if typeof(Settings.jumpConnection) == "RBXScriptConnection" then
         Settings.jumpConnection:Disconnect()
@@ -617,9 +631,9 @@ loadingLabel.Font = Enum.Font.GothamBold
 
 wait(7.25)
 
-showNotification("Celaris V2", "Last Update: 5/12/2025", 5, "Celaris")
+showNotification("Celaris V2", "Last Update: 5/17/2025", 5, "Celaris")
 local games = {
-    ["Practice"] = 14259168147,
+    ["Practice"] = 8206123457,
     ["Noob Servers"] = 8204899140,
     ["Pro Servers"] = 17541256525
 }
@@ -835,6 +849,24 @@ end)
 
 PlayersTab:Slider("JumpPower Amount", 50, 60, 50, function(value)
     Settings.jumpPowerValue = value
+end)
+
+PlayersTab:Toggle("Angle Enhancer", false, function(value)
+    Settings.angleEnhancerEnabled = value
+    if value == true then
+        showNotification("Angle Enhancer", "Status: Enabled", 2, "Update")
+        lib:Notification("ALERT:", "Make sure JumpPower is OFF!", "Okay!")
+    else
+        showNotification("Angle Enhancer", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+PlayersTab:Slider("Angle Boost", 5, 10, 6, function(value)
+    Settings.angleBoost = value
+end)
+
+PlayersTab:Slider("Angle Hold Time", 1, 5, 2, function(value)
+    Settings.holdTime = value
 end)
 
 PlayersTab:Toggle("No Move Restrictions", false, function(value)
@@ -1752,7 +1784,7 @@ end
 
 
 game:GetService("RunService").Heartbeat:Connect(function()
-    if Settings.walkSpeedEnabled == true or Settings.jumpPowerEnabled == true or Settings.noMoveRestrictions == true then
+    if Settings.walkSpeedEnabled or Settings.jumpPowerEnabled or Settings.noMoveRestrictions or Settings.angleEnhancerEnabled then
         applySettings()
     end
 end)
@@ -1888,10 +1920,10 @@ local stroke = gangbang:FindFirstChild("UIStroke")
 local corner = gangbang:FindFirstChild("UICorner")
 
 stroke.Color = Color3.fromRGB(255, 104, 104)
-stroke.Thickness = 1.35
+stroke.Thickness = 2
 corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
-gg.Main.Size = UDim2.new(0, 560, 0, 340)
+gg:WaitForChild("Main").Size = UDim2.new(0, 560, 0, 340)
 
 SettingsTab:Textbox("UI Keybind", false, function(v)
     local success, key = pcall(function()
@@ -1905,3 +1937,4 @@ SettingsTab:Textbox("UI Keybind", false, function(v)
         showNotification("UI Keybind", "Put in a valid keybind!", 3, "Error")
     end
 end)
+print("Version 2.0.2")
