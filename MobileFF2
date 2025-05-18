@@ -123,7 +123,6 @@ local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
-
 local CoreGui = game:GetService("CoreGui")
 
 -- Remove existing instance if any
@@ -352,11 +351,9 @@ local Settings = {
     originalSize = Vector3.new(0.8500000238418579, 5, 1.5),
     blockPartName = "BlockPart",
 
-    pullEnabled = false,
-    pullDistance = 10,
-    pullDelayEnabled = false,
-    pullDelayAmount = 0.1,
-    lastPossessTime = 0,
+    angleEnhancerEnabled = false,
+    holdTime = 1, -- default
+    angleBoost = 10,
     -- Jump Cooldown
     noJumpCooldownEnabled = false,
     lastFakeJumpTime = 0,
@@ -468,37 +465,144 @@ local function disableCanCollide()
 end
 
 -- // WalkSpeed, JumpPower and No Move Restrictions Logic
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+
+local angleBoosting = false
+local angleButtonActive = false
+local LocalPlayer = Players.LocalPlayer
+
+local function createAngleBoostButton()
+    if CoreGui:FindFirstChild("AngleBoostGui") then return end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AngleBoostGui"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.Parent = CoreGui
+
+    local angleboostbutton = Instance.new("TextButton")
+    angleboostbutton.Name = "AngleBoostButton"
+    angleboostbutton.Size = UDim2.new(0, 120, 0, 35)
+    angleboostbutton.Position = UDim2.new(0.4, -70, 1, -60)
+    angleboostbutton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    angleboostbutton.Text = "Activate"
+    angleboostbutton.Font = Enum.Font.Gotham
+    angleboostbutton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    angleboostbutton.TextSize = 14
+    angleboostbutton.ZIndex = 10
+    angleboostbutton.Visible = false
+    angleboostbutton.Parent = screenGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 11)
+    corner.Parent = angleboostbutton
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Thickness = 1.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = angleboostbutton
+
+    -- Improved Drag Logic
+    local dragging = false
+    local dragInput, mousePos, buttonPos
+
+    angleboostbutton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            buttonPos = angleboostbutton.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - mousePos
+            angleboostbutton.Position = UDim2.new(
+                buttonPos.X.Scale,
+                buttonPos.X.Offset + delta.X,
+                buttonPos.Y.Scale,
+                buttonPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    angleboostbutton.MouseButton1Click:Connect(function()
+        angleButtonActive = not angleButtonActive
+        angleboostbutton.Text = angleButtonActive and "Deactivate" or "Activate"
+    end)
+end
+
+
+
 local function applySettings()
-    local character = game:GetService("Players").LocalPlayer.Character
+    local character = LocalPlayer.Character
     if character and character:FindFirstChild("Humanoid") then
         local humanoid = character.Humanoid
 
-        -- Check if WalkSpeed is 0 (movement restricted)
         if humanoid.WalkSpeed == 0 then
-            -- If No Move Restrictions is off and WalkSpeed is enabled, restrict movement
             if Settings.walkSpeedEnabled and not Settings.noMoveRestrictions then
-                humanoid.WalkSpeed = 0 -- Prevent movement if WalkSpeed is enabled and No Move Restrictions is off
+                humanoid.WalkSpeed = 0
             elseif Settings.walkSpeedEnabled or Settings.noMoveRestrictions then
-                humanoid.WalkSpeed = 20 -- Allow movement if bypassed by No Move Restrictions or WalkSpeedEnabled
+                humanoid.WalkSpeed = 20
             end
-            humanoid.JumpPower = 50 -- Always default jump during restricted movement
+            humanoid.JumpPower = 50
         else
-            -- If movement is not restricted (WalkSpeed > 0)
+            -- WalkSpeed handling
             if Settings.walkSpeedEnabled then
-                humanoid.WalkSpeed = Settings.walkSpeedValue -- Apply custom WalkSpeed if enabled
+                humanoid.WalkSpeed = Settings.walkSpeedValue
             else
-                humanoid.WalkSpeed = 20 -- Default WalkSpeed when disabled
+                humanoid.WalkSpeed = 20
             end
 
-            -- Apply JumpPower settings
+            -- JumpPower handling
             if Settings.jumpPowerEnabled then
-                humanoid.JumpPower = Settings.jumpPowerValue -- Custom JumpPower if enabled
+                humanoid.JumpPower = Settings.jumpPowerValue
             else
-                humanoid.JumpPower = 50 -- Default JumpPower when disabled
+                humanoid.JumpPower = 50
+            end
+
+            -- Angle Enhancer UI + Boost handling
+            local gui = CoreGui:FindFirstChild("AngleBoostGui")
+
+            if Settings.angleEnhancerEnabled then
+                if not gui then
+                    createAngleBoostButton()
+                    gui = CoreGui:FindFirstChild("AngleBoostGui")
+                end
+
+                local angleboostbutton = gui and gui:FindFirstChild("AngleBoostButton")
+                if angleboostbutton then
+                    angleboostbutton.Visible = true
+                end
+
+                if angleButtonActive then
+                    humanoid.JumpPower = 50 + (Settings.angleBoost or 0)
+                end
+            else
+                -- Cleanly disable UI and reset angle boost state
+                if gui then
+                    local angleboostbutton = gui:FindFirstChild("AngleBoostButton")
+                    if angleboostbutton then
+                        angleboostbutton.Visible = false
+                        angleboostbutton.Text = "Activate"
+                    end
+                end
+                angleButtonActive = false
             end
         end
     end
 end
+
 
 local function setupNoJumpCooldown()
     if typeof(Settings.jumpConnection) == "RBXScriptConnection" then
@@ -612,15 +716,15 @@ local loadingLabel = main.Loading
 
 -- Set executor name
 local exc = getexecutorname()
-executorLabel.Text = "Executor: " .. exc
+executorLabel.Text = "Executor: " .. exc .. " | Device: " .. UserInputService:GetPlatform().Name
 loadingLabel.Font = Enum.Font.GothamBold
 
 
 wait(7.25)
 
-showNotification("Celaris V2", "Last Update: 5/12/2025", 5, "Celaris")
+showNotification("Celaris V2", "Last Update: 5/17/2025", 5, "Celaris")
 local games = {
-    ["Practice"] = 14259168147,
+    ["Practice"] = 8206123457,
     ["Noob Servers"] = 8204899140,
     ["Pro Servers"] = 17541256525
 }
@@ -812,11 +916,11 @@ end)
 CatchingTab:Textbox("Pull Vector Distance", false, function(v)
     local num = tonumber(v)
 
-    if num and num >= 5 and num <= 50 then
+    if num and num >= 5 and num <= 30 then
         _G.PullVectorDistance = num
         showNotification("Pull Vector Distance Updated", "New Distance: " .. num, 3, "Update")
     else
-        showNotification("Invalid Distance", "Enter a number from 5 to 50", 3, "Warning")
+        showNotification("Invalid Distance", "Enter a number from 5 to 30", 3, "Warning")
     end
 end)
 
@@ -889,6 +993,41 @@ PlayersTab:Toggle("No Move Restrictions", false, function(value)
         showNotification("No Move Restrictions", "Status: Disabled", 2, "Warning")
     end
 end)
+
+PlayersTab:Toggle("Angle Enhancer", false, function(value)
+    Settings.angleEnhancerEnabled = value
+
+    local gui = CoreGui:FindFirstChild("AngleBoostGui")
+    
+    if value == true then
+        showNotification("Angle Enhancer", "Status: Enabled", 2, "Update")
+        lib:Notification("ALERT:", "Make sure JumpPower is OFF!", "Okay!")
+        if not gui then
+            createAngleBoostButton()
+        else
+            local button = gui:FindFirstChild("AngleBoostButton")
+            if button then
+                button.Visible = true
+            end
+        end
+    else
+        showNotification("Angle Enhancer", "Status: Disabled", 2, "Warning")
+        if gui then
+            local button = gui:FindFirstChild("AngleBoostButton")
+            if button then
+                button.Visible = false
+                button.Text = "Activate"
+            end
+        end
+        angleButtonActive = false
+    end
+    game:GetService("Players").LocalPlayer.Character.Humanoid.JumpPower = 50
+end)
+
+PlayersTab:Slider("Angle Boost", 5, 10, 6, function(value)
+    Settings.angleBoost = value
+end)
+
 
 PlayersTab:Toggle("No Jump Cooldown", false, function(value)
     Settings.noJumpCooldownEnabled = value
@@ -1828,7 +1967,7 @@ end
 
 
 game:GetService("RunService").Heartbeat:Connect(function()
-    if Settings.walkSpeedEnabled == true or Settings.jumpPowerEnabled == true or Settings.noMoveRestrictions == true then
+    if Settings.walkSpeedEnabled == true or Settings.jumpPowerEnabled == true or Settings.noMoveRestrictions == true or Settings.angleEnhancerEnabled == true then
         applySettings()
     end
 end)
@@ -1851,73 +1990,6 @@ task.spawn(function()
     end
 end)
 
-
-
-TeleportsTab:Button("Pro Servers", function()
-    showNotification("Game Teleport", "Destination: Pro Servers", 3, "Teleport")
-    TeleportService:Teleport(17541256525, player)
-end)
-
-TeleportsTab:Button("Noob Servers", function()
-    showNotification("Game Teleport", "Destination: Noob Servers", 3, "Teleport")
-    TeleportService:Teleport(8204899140, player)
-end)
-
-TeleportsTab:Button("Practice Mode", function()
-    showNotification("Game Teleport", "Destination: Practice", 3, "Teleport")
-    TeleportService:Teleport(8206123457, player)
-end)
-
-TeleportsTab:Button("Rejoin Server", function()
-    showNotification("Game Teleport", "Destination: Same Server", 3, "Teleport")
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) 
-end)
-
-TeleportsTab:Button("Join A New Server", function()
-    showNotification("Game Teleport", "Joining a new server...", 3, "Teleport")
-    local foundServer = false
-    local cursor = ""
-
-    while not foundServer do
-        local url = "https://games.roblox.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
-        if cursor ~= "" then url = url .. "&cursor=" .. cursor end
-
-        local response = HttpService:JSONDecode(game:HttpGet(url))
-        cursor = response.nextPageCursor or ""
-
-        for _, server in ipairs(response.data) do
-            local id = server.id
-
-            if server.playing >= 5 and server.playing < server.maxPlayers and id ~= JobID then
-                local alreadyJoined = false
-
-                -- Check cache
-                for _, cached in ipairs(AllIDs) do
-                    if tonumber(cached) ~= nil and tonumber(cached) ~= currentHour then
-                        -- Clear file if hour has changed
-                        delfile("NotSameServers.json")
-                        AllIDs = { currentHour }
-                        break
-                    end
-                    if id == cached then
-                        alreadyJoined = true
-                        break
-                    end
-                end
-
-                if not alreadyJoined then
-                    table.insert(AllIDs, id)
-                    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
-                    TeleportService:TeleportToPlaceInstance(PlaceID, id, Players.LocalPlayer)
-                    foundServer = true
-                    break
-                end
-            end
-        end
-
-        if cursor == "" then break end
-    end
-end)
 
 KickerTab:Toggle("Auto Kicker", false, function(value)
     Settings.kickOn = value
@@ -1946,8 +2018,6 @@ KickerTab:Dropdown("Auto Kicker Type", {"High", "Normal", "Low"}, function(value
     end
 end)
 
-local UserInputService = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Settings.keysus then
@@ -1969,6 +2039,11 @@ corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
 gg:FindFirstChild("Main").Size = UDim2.new(0, 560, 0, 340)
 
+
+TeleportsTab:Button("Pro Servers", function()
+    showNotification("Game Teleport", "Destination: Pro Servers", 3, "Teleport")
+    TeleportService:Teleport(17541256525, player)
+end)
 
 TeleportsTab:Button("Noob Servers", function()
     showNotification("Game Teleport", "Destination: Noob Servers", 3, "Teleport")
