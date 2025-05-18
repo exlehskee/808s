@@ -1180,7 +1180,7 @@ Grapher.Segment.Color = Color3.fromRGB(255, 0, 0)
 Grapher.Segment.Material = Enum.Material.Neon
 Grapher.Segment.CanCollide = false
 Grapher.Segment.Size = Vector3.new(0.2, 0.2, 0.2)
-Grapher.Segment.Name = "BeamSegment"
+Grapher.Segment.Name = "BeamBeam"
 
 Grapher.Params = RaycastParams.new()
 Grapher.Params.IgnoreWater = true
@@ -1203,7 +1203,7 @@ end
 
 function Grapher:WipeMarkers()
     for _, obj in pairs(workspace:GetChildren()) do
-        if obj.Name == "BeamSegment" then
+        if obj.Name == "BeamBeam" then
             obj:Destroy()
         end
     end
@@ -1282,7 +1282,7 @@ VisualsTab:Colorpicker("Trajectory Color", Settings.TrajectoryColor, function(t)
     Grapher.Segment.Color = t
 
     for _, child in ipairs(workspace:GetChildren()) do
-        if child.Name == "BeamSegment" then
+        if child.Name == "BeamBeam" then
             child.Color = t
             child.Transparency = 0
         end
