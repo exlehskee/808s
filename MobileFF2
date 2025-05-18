@@ -1398,26 +1398,6 @@ function Grapher:GetLanding(origin, velocity, target)
 
     self.Params.FilterDescendantsInstances = self:GetCollidables()
 
-    local highlight = nil
-
-    if target then
-        for _, existing in ipairs(game.CoreGui:GetChildren()) do
-            if existing:IsA("Highlight") and existing.Adornee == target then
-                wait(4)
-                existing:Destroy()
-            end
-        end
-
-        highlight = Instance.new("Highlight", game.CoreGui)
-        highlight.Adornee = target
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Enabled = true
-        highlight.OutlineColor = Grapher.Segment.Color
-        highlight.OutlineTransparency = Grapher.Segment.Transparency
-        highlight.FillColor = Color3.fromRGB(255, 255, 255)
-        highlight.FillTransparency = 0.7
-    end
-
     while Grapher.VisualizerEnabled do
         elapsed = elapsed + Grapher.CastStep
         local nextPos = origin + velocity * elapsed - Vector3.new(0, 0.5 * 28 * elapsed ^ 2, 0)
@@ -1438,8 +1418,7 @@ function Grapher:GetLanding(origin, velocity, target)
 
         prevPos = nextPos
 
-        if target and highlight and (target.Parent ~= workspace or not target:FindFirstChildOfClass("BodyForce")) then
-            highlight:Destroy()
+        if target and (target.Parent ~= workspace or not target:FindFirstChildOfClass("BodyForce")) then
             self:WipeMarkers()
             break
         end
