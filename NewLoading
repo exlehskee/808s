@@ -23,7 +23,7 @@ frame.Size = UDim2.fromScale(1, 1)
 frame.BackgroundColor3 = Color3.new(0, 0, 0)
 frame.Parent = screenGui
 
--- Container for center alignment
+-- Center container
 local container = Instance.new("Frame")
 container.AnchorPoint = Vector2.new(0.5, 0.5)
 container.Position = UDim2.fromScale(0.5, 0.5)
@@ -31,7 +31,6 @@ container.Size = UDim2.fromOffset(400, 300)
 container.BackgroundTransparency = 1
 container.Parent = frame
 
--- Layout to center items vertically
 local layout = Instance.new("UIListLayout")
 layout.FillDirection = Enum.FillDirection.Vertical
 layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -54,10 +53,10 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 48
 title.TextColor3 = Color3.new(1, 1, 1)
 title.BackgroundTransparency = 1
-title.Size = UDim2.new(1, 0, 60, 0)
+title.Size = UDim2.new(1, 0, 0, 60)
 title.TextTransparency = 1
+title.TextStrokeTransparency = 0.9 -- Ensure visibility
 title.TextWrapped = true
-title.TextStrokeTransparency = 1
 title.Parent = container
 
 -- Subtitle
@@ -67,16 +66,17 @@ subtitle.Font = Enum.Font.Gotham
 subtitle.TextSize = 20
 subtitle.TextColor3 = Color3.fromRGB(178, 178, 178)
 subtitle.BackgroundTransparency = 1
-subtitle.Size = UDim2.new(1, 0, 30, 0)
+subtitle.Size = UDim2.new(1, 0, 0, 30)
 subtitle.TextTransparency = 1
+subtitle.TextStrokeTransparency = 0.9
 subtitle.TextWrapped = true
 subtitle.Parent = container
 
 -- Fade In
 local function fadeIn()
 	TweenService:Create(icon, TweenInfo.new(1), {ImageTransparency = 0}):Play()
-	TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
-	TweenService:Create(subtitle, TweenInfo.new(1), {TextTransparency = 0}):Play()
+	TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0, TextStrokeTransparency = 1}):Play()
+	TweenService:Create(subtitle, TweenInfo.new(1), {TextTransparency = 0, TextStrokeTransparency = 1}):Play()
 end
 
 -- Fade Out
