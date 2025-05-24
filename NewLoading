@@ -1,0 +1,81 @@
+-- Services
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local CoreGui = game:GetService("CoreGui")
+
+-- Blur Effect
+local blur = Instance.new("BlurEffect")
+blur.Size = 0
+blur.Parent = Lighting
+
+-- Tween to blur in
+TweenService:Create(blur, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = 24}):Play()
+
+-- UI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.Name = "CelarisLoading"
+screenGui.Parent = CoreGui
+
+local frame = Instance.new("Frame")
+frame.BackgroundTransparency = 1
+frame.Size = UDim2.fromScale(1, 1)
+frame.BackgroundColor3 = Color3.new(0, 0, 0)
+frame.Parent = screenGui
+
+-- Icon
+local icon = Instance.new("ImageLabel")
+icon.Image = "rbxthumb://type=Asset&id=109808521414166&w=420&h=420"
+icon.BackgroundTransparency = 1
+icon.Size = UDim2.fromOffset(150, 150)
+icon.Position = UDim2.new(0.5, -75, 0.3, -75)
+icon.ImageTransparency = 1
+icon.Parent = frame
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Text = "Celaris V3"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 48
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, 0, 0, 60)
+title.Position = UDim2.new(0, 0, 0.55, 0)
+title.TextTransparency = 1
+title.Parent = frame
+
+-- Subtitle
+local subtitle = Instance.new("TextLabel")
+subtitle.Text = "Elevate your game."
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 20
+subtitle.TextColor3 = Color3.fromRGB(178, 178, 178)
+subtitle.BackgroundTransparency = 1
+subtitle.Size = UDim2.new(1, 0, 0, 30)
+subtitle.Position = UDim2.new(0, 0, 0.62, 0)
+subtitle.TextTransparency = 1
+subtitle.Parent = frame
+
+-- Fade In Tweens
+local function fadeIn()
+	TweenService:Create(icon, TweenInfo.new(1), {ImageTransparency = 0}):Play()
+	TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 0}):Play()
+	TweenService:Create(subtitle, TweenInfo.new(1), {TextTransparency = 0}):Play()
+end
+
+-- Fade Out Tweens
+local function fadeOut()
+	TweenService:Create(icon, TweenInfo.new(1), {ImageTransparency = 1}):Play()
+	TweenService:Create(title, TweenInfo.new(1), {TextTransparency = 1}):Play()
+	TweenService:Create(subtitle, TweenInfo.new(1), {TextTransparency = 1}):Play()
+	TweenService:Create(blur, TweenInfo.new(1), {Size = 0}):Play()
+	wait(1.1)
+	screenGui:Destroy()
+	blur:Destroy()
+end
+
+-- Run sequence
+fadeIn()
+task.wait(5)
+fadeOut()
