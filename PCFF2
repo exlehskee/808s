@@ -154,7 +154,6 @@ container.Parent = screenGui
 
 local activeNotifs = {}
 
-local activeNotifs = {}
 
 -- Predefined table of images
 local images = {
@@ -186,7 +185,7 @@ function showNotification(title, text, duration, imageType)
     corner.CornerRadius = UDim.new(0, 11)
 
     local stroke = Instance.new("UIStroke", notif)
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.Thickness = 1
 
     -- Get the appropriate icon based on the imageType
@@ -255,7 +254,6 @@ function showNotification(title, text, duration, imageType)
 end
 
 
--- All settings stored in one table
 local Settings = {
     keysus = Enum.KeyCode.RightControl,
 
@@ -268,7 +266,7 @@ local Settings = {
 
     -- Visualie best jump spot
     visualizeJumpSpot = false,
-    LandingSpotColor = Color3.fromRGB(0, 255, 4),
+    LandingSpotColor = Color3.fromRGB(0, 255, 113),
 
     removeBallTrail = false,
 
@@ -277,7 +275,7 @@ local Settings = {
     catchDelay = 0.01,
     maxAutoCatchDistance = 10,
 
-    TrajectoryColor = Color3.fromRGB(255, 255, 255),
+    TrajectoryColor = Color3.fromRGB(0, 255, 113),
 
     -- Auto Swat
     autoSwatEnabled = false,
@@ -317,8 +315,12 @@ local Settings = {
     MagnetDelay = 0.01,
 
     -- Hitbox
-    HitboxColor = Color3.fromRGB(178, 178, 178),
+    HitboxColor = Color3.fromRGB(0, 255, 113),
     HitboxTransparency = 0.5,
+
+    -- Dive Boost
+    diveBoostEnabled = false,
+    diveBoostAmount = 10,
 
     -- Block Reach
     toggleBlockReach = false,
@@ -440,6 +442,7 @@ end
 -- // No JumpCooldown
 
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
 LocalPlayer.CharacterAdded:Connect(function(char)
     Character = char
 end)
@@ -608,30 +611,26 @@ end
 -- // Library
 
 loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/LoadingScreen")()
--- Wait for the GUI to load (loaded from URL)
+
 wait(1)
 
--- Find the GUI manually
 local screenGui = game:GetService("CoreGui"):FindFirstChild("ScreenGui")
 if not screenGui then
     warn("Loading Screen not found.")
     return
 end
 
--- Wait for the elements to appear
 local main = screenGui.Main
 local executorLabel = main.Executor
 local loadingLabel = main.Loading
 
--- Set executor name
 local exc = getexecutorname()
-executorLabel.Text = "Executor: " .. exc .. " | Device: " .. UserInputService:GetPlatform().Name
+executorLabel.Text = "Executor: " .. exc
 loadingLabel.Font = Enum.Font.GothamBold
-
 
 wait(7.25)
 
-showNotification("Celaris V2", "Last Update: 5/17/2025", 5, "Celaris")
+showNotification("Celaris V2", "Last Update: 5/27/2025", 5, "Celaris")
 local games = {
     ["Practice"] = 8206123457,
     ["Noob Servers"] = 8204899140,
@@ -658,7 +657,7 @@ end]]
 
 local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
 local keybind = Settings.keysus
-local win = lib:Window("Celaris | Football Fusion", Color3.fromRGB(255, 104, 104))
+local win = lib:Window("Celaris | Football Fusion", Color3.fromRGB(0, 255, 113))
 
 local CatchingTab = win:Tab("Catching")
 local PlayersTab = win:Tab("Player")
@@ -753,7 +752,7 @@ end)
 
 CatchingTab:Toggle("Magnet Delay", false, function(v)
     Settings.MagnetDelay = v
-    if value == true then
+    if v == true then
         showNotification("Magnet Delay", "Status: Enabled", 2, "Update")
     else
         showNotification("Magnet Delay", "Status: Disabled", 2, "Warning")
@@ -869,6 +868,19 @@ PlayersTab:Slider("Angle Hold Time", 1, 5, 2, function(value)
     Settings.holdTime = value
 end)
 
+PlayersTab:Toggle("Dive Boost", false, function(value)
+    Settings.diveBoostEnabled = value
+    if value then
+        showNotification("Dive Boost", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Dive Boost", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+PlayersTab:Slider("Dive Boost Amount", 0, 100, 40, function(value)
+    Settings.diveBoostAmount = value
+end)
+
 PlayersTab:Toggle("No Move Restrictions", false, function(value)
     Settings.noMoveRestrictions = value
     if value == true then
@@ -910,7 +922,7 @@ local function createMobileQuickTPButton()
     corner.Parent = button
     stroke.Parent = button
 
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Thickness = 1.5
 
@@ -1125,7 +1137,6 @@ game:GetService("Players").LocalPlayer.PlayerGui.ChildAdded:Connect(function(chi
             -- Final confirmation click
             task.wait(0.05) 
             VIM:SendMouseButtonEvent(0, 0, 0, true, nil, 0)
-            print("Kick complete using mode:", Settings.kickerMode, "and type:", Settings.kickType)
         end
     end
 end)
@@ -1176,10 +1187,10 @@ local Grapher = {}
 Grapher.Segment = Instance.new("Part")
 Grapher.Segment.Anchored = true
 Grapher.Segment.Transparency = 0.3
-Grapher.Segment.Color = Color3.fromRGB(255, 0, 0)
+Grapher.Segment.Color = Color3.fromRGB(0, 255, 113)
 Grapher.Segment.Material = Enum.Material.Neon
 Grapher.Segment.CanCollide = false
-Grapher.Segment.Size = Vector3.new(0.2, 0.2, 0.2)
+Grapher.Segment.Size = Vector3.new(0.3, 0.4, 0.2)
 Grapher.Segment.Name = "BeamBeam"
 
 Grapher.Params = RaycastParams.new()
@@ -1735,6 +1746,31 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
+game:GetService("RunService").Heartbeat:Connect(function()
+    if Settings.diveBoostEnabled then
+        local char = Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildWhichIsA("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+
+            -- Detect PlatformStand as signal of a dive
+            if hum and hum.PlatformStand and not char:FindFirstChild("DiveBoosted") then
+                -- Create a flag so we don’t apply boost multiple times
+                local tag = Instance.new("BoolValue")
+                tag.Name = "DiveBoosted"
+                tag.Parent = char
+                game.Debris:AddItem(tag, 1) -- remove after 1s
+
+                -- Apply boost
+                local direction = hrp.CFrame.LookVector
+                local boostAmount = Settings.diveBoostAmount
+                hrp.Velocity = direction * boostAmount
+            end
+        end
+    end
+end)
+
+
 function handleGraphics(char, low)
     if not char then return end
 
@@ -1898,7 +1934,7 @@ local gangbang = gang:FindFirstChild("name").Main
 local stroke = gangbang:FindFirstChild("UIStroke")
 local corner = gangbang:FindFirstChild("UICorner")
 
-stroke.Color = Color3.fromRGB(255, 104, 104)
+stroke.Color = Color3.fromRGB(0, 255, 113)
 stroke.Thickness = 1.35
 corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
