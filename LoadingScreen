@@ -65,12 +65,12 @@ Logo.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Logo.BorderSizePixel = 0
 Logo.Position = UDim2.new(0.155156925, 0, 0.51386106, 0)
 Logo.Size = UDim2.new(0.169204742, 0, 0.581395328, 0)
-Logo.Image = "rbxassetid://92408819531793"
+Logo.Image = "rbxassetid://94715774275917"
 Logo.ScaleType = Enum.ScaleType.Crop
 
 Line.Name = "Line"
 Line.Parent = Main
-Line.BackgroundColor3 = Color3.fromRGB(255, 104, 104)
+Line.BackgroundColor3 = Color3.fromRGB(0, 255, 113)
 Line.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Line.BorderSizePixel = 0
 Line.Position = UDim2.new(0.272466063, 0, 0.290719777, 0)
