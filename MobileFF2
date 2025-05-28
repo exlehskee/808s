@@ -186,7 +186,7 @@ function showNotification(title, text, duration, imageType)
     corner.CornerRadius = UDim.new(0, 11)
 
     local stroke = Instance.new("UIStroke", notif)
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.Thickness = 1
 
     -- Get the appropriate icon based on the imageType
@@ -501,7 +501,7 @@ local function createAngleBoostButton()
     corner.Parent = angleboostbutton
 
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.Thickness = 1.5
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Parent = angleboostbutton
@@ -749,7 +749,7 @@ end]]
 
 local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
 local keybind = Settings.keysus
-local win = lib:Window("Celaris | Football Fusion", Color3.fromRGB(255, 104, 104))
+local win = lib:Window("Celaris | Football Fusion", Color3.fromRGB(0, 255, 113))
 
 local CatchingTab = win:Tab("Catching")
 local PlayersTab = win:Tab("Player")
@@ -1061,7 +1061,7 @@ local function createMobileQuickTPButton()
     corner.Parent = button
     stroke.Parent = button
 
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Thickness = 1.5
 
@@ -2012,7 +2012,7 @@ local gangbang = gang:FindFirstChild("name").Main
 local stroke = gangbang:FindFirstChild("UIStroke")
 local corner = gangbang:FindFirstChild("UICorner")
 
-stroke.Color = Color3.fromRGB(255, 104, 104)
+stroke.Color = Color3.fromRGB(0, 255, 113)
 stroke.Thickness = 1.35
 corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
