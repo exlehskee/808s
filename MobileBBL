@@ -78,7 +78,7 @@ function showNotification(title, text, duration, imageType)
     corner.CornerRadius = UDim.new(0, 11)
 
     local stroke = Instance.new("UIStroke", notif)
-    stroke.Color = Color3.fromRGB(255, 104, 104)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
     stroke.Thickness = 1
 
     -- Get the appropriate icon based on the imageType
@@ -223,7 +223,7 @@ local Settings = {
 -- // Script
 local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
 local keybind = Settings.keysus
-local win = lib:Window("Celaris | Basketball Legends", Color3.fromRGB(255, 104, 104))
+local win = lib:Window("Celaris | Basketball Legends", Color3.fromRGB(0, 255, 113))
 
 local ShootingTab = win:Tab("Shooting")
 local PlayersTab = win:Tab("Player")
@@ -368,7 +368,7 @@ if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
 		button.Parent = screenGui
 
 		local stroke = Instance.new("UIStroke")
-		stroke.Color = Color3.fromRGB(255, 104, 104)
+		stroke.Color = Color3.fromRGB(0, 255, 113)
 		stroke.Parent = button
 
 		local corner = Instance.new("UICorner")
@@ -471,7 +471,7 @@ local gangbang = gang:FindFirstChild("name").Main
 local stroke = gangbang:FindFirstChild("UIStroke")
 local corner = gangbang:FindFirstChild("UICorner")
 
-stroke.Color = Color3.fromRGB(255, 104, 104)
+stroke.Color = Color3.fromRGB(0, 255, 113)
 stroke.Thickness = 1.35
 corner.CornerRadius = UDim.new(0, 12)
 local gg = gang:WaitForChild("name")
