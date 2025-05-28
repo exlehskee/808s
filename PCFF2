@@ -448,6 +448,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 end)
 
 local workspace = game:GetService("Workspace")
+local Workspace = game:GetService("Workspace")
 local allowedPlaceIds = {
     [8204899140] = true,
     [17541256525] = true
@@ -962,10 +963,18 @@ DefenseTab:Slider("Quick TP Distance", 1, 5, 1, function(value)
     Settings.tpDistance = value 
 end)
 
-DefenseTab:Dropdown("Quick TP Keybind", {"F", "T", "G", "E", "Z", "X"}, function(value)
-    Settings.tpKey = Enum.KeyCode[value]
-end)
+DefenseTab:Textbox("Quick TP Keybind", false, function(v)
+    local success, key = pcall(function()
+        return Enum.KeyCode[v]
+    end)
 
+    if success and key then
+        Settings.tpKey = key
+        showNotification("Quick TP Keybind", "Set keybind to: " .. v, 3, "Update")
+    else
+        showNotification("Quick TP Keybind", "Put in a valid keybind!", 3, "Error")
+    end
+end)
 
 DefenseTab:Toggle("Block Reach", false, function(value)
     Settings.toggleBlockReach = value
@@ -1506,7 +1515,7 @@ local function handleTrail(ball)
 end
 
 -- Listen for new Footballs added to workspace
-workspace.ChildAdded:Connect(function(child)
+Workspace.ChildAdded:Connect(function(child)
     if child:IsA("BasePart") and child.Name == "Football" then
         child:GetPropertyChangedSignal("Parent"):Connect(function()
             handleTrail(child)
@@ -1542,38 +1551,45 @@ end)
 task.spawn(function()
     while true do
         task.wait()
-
         if not Settings.Magnets then continue end
         if not Character or not Character:FindFirstChild("CatchRight") or not Character:FindFirstChild("CatchLeft") then continue end
-
-        for _, v in workspace:GetChildren() do
-            if v.Name == "Football" and v:IsA("BasePart") and not v.Anchored and v.Parent == workspace then
-                -- Add sphere if missing
+        
+        for _, v in Workspace:GetChildren() do
+            if v.Name == "Football" and v:IsA("BasePart") and not v.Anchored and v.Parent == Workspace then
                 local sphere = v:FindFirstChild("RangeSphere")
+                
                 if not sphere then
                     sphere = Instance.new("Part")
                     sphere.Name = "RangeSphere"
                     sphere.Shape = Enum.PartType.Ball
                     sphere.Size = Vector3.new(Settings.Range, Settings.Range, Settings.Range)
                     sphere.Color = Settings.HitboxColor
-                    sphere.Transparency = Settings.ShowHitbox and Settings.HitboxTransparency or 1
                     sphere.CanCollide = false
                     sphere.Anchored = true
                     sphere.Material = Enum.Material.ForceField
                     sphere.Position = v.Position
+                    if Settings.ShowHitbox == true then
+                        sphere.Transparency = Settings.HitboxTransparency
+                    else
+                        sphere.Transparency = 1
+                    end
                     sphere.Parent = v
-
+                    
                     task.spawn(function()
-                        while sphere.Parent == v and v.Parent == workspace do
+                        while sphere.Parent == v and v.Parent == Workspace do
                             task.wait()
                             sphere.CFrame = v.CFrame
+                            if Settings.ShowHitbox == true then
+                                sphere.Transparency = Settings.HitboxTransparency
+                            else
+                                sphere.Transparency = 1
+                            end
                         end
                     end)
                 end
 
-                -- Distance check
-                local distRight = (Character["CatchRight"].Position - sphere.Position).magnitude
-                local distLeft = (Character["CatchLeft"].Position - sphere.Position).magnitude
+                local distRight = (Character["CatchRight"].Position - sphere.Position).Magnitude
+                local distLeft = (Character["CatchLeft"].Position - sphere.Position).Magnitude
 
                 if distRight <= Settings.Range or distLeft <= Settings.Range then
                     task.spawn(function()
@@ -1590,7 +1606,6 @@ task.spawn(function()
         end
     end
 end)
-
 
 workspace.ChildRemoved:Connect(function(child)
     if child.Name == "Football" and child:IsA("BasePart") then
