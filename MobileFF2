@@ -1714,38 +1714,45 @@ end)
 task.spawn(function()
     while true do
         task.wait()
-
         if not Settings.Magnets then continue end
         if not Character or not Character:FindFirstChild("CatchRight") or not Character:FindFirstChild("CatchLeft") then continue end
-
-        for _, v in workspace:GetChildren() do
-            if v.Name == "Football" and v:IsA("BasePart") and not v.Anchored and v.Parent == workspace then
-                -- Add sphere if missing
+        
+        for _, v in Workspace:GetChildren() do
+            if v.Name == "Football" and v:IsA("BasePart") and not v.Anchored and v.Parent == Workspace then
                 local sphere = v:FindFirstChild("RangeSphere")
+                
                 if not sphere then
                     sphere = Instance.new("Part")
                     sphere.Name = "RangeSphere"
                     sphere.Shape = Enum.PartType.Ball
                     sphere.Size = Vector3.new(Settings.Range, Settings.Range, Settings.Range)
                     sphere.Color = Settings.HitboxColor
-                    sphere.Transparency = Settings.ShowHitbox and Settings.HitboxTransparency or 1
                     sphere.CanCollide = false
                     sphere.Anchored = true
                     sphere.Material = Enum.Material.ForceField
                     sphere.Position = v.Position
+                    if Settings.ShowHitbox == true then
+                        sphere.Transparency = Settings.HitboxTransparency
+                    else
+                        sphere.Transparency = 1
+                    end
                     sphere.Parent = v
-
+                    
                     task.spawn(function()
-                        while sphere.Parent == v and v.Parent == workspace do
+                        while sphere.Parent == v and v.Parent == Workspace do
                             task.wait()
                             sphere.CFrame = v.CFrame
+                            if Settings.ShowHitbox == true then
+                                sphere.Transparency = Settings.HitboxTransparency
+                            else
+                                sphere.Transparency = 1
+                            end
                         end
                     end)
                 end
 
-                -- Distance check
-                local distRight = (Character["CatchRight"].Position - sphere.Position).magnitude
-                local distLeft = (Character["CatchLeft"].Position - sphere.Position).magnitude
+                local distRight = (Character["CatchRight"].Position - sphere.Position).Magnitude
+                local distLeft = (Character["CatchLeft"].Position - sphere.Position).Magnitude
 
                 if distRight <= Settings.Range or distLeft <= Settings.Range then
                     task.spawn(function()
@@ -1762,7 +1769,6 @@ task.spawn(function()
         end
     end
 end)
-
 
 workspace.ChildRemoved:Connect(function(child)
     if child.Name == "Football" and child:IsA("BasePart") then
