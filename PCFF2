@@ -629,7 +629,7 @@ loadingLabel.Font = Enum.Font.GothamBold
 
 wait(7.25)
 
-showNotification("Celaris V2", "Last Update: 5/27/2025", 5, "Celaris")
+showNotification("Celaris V2", "Last Update: 5/29/2025", 5, "Celaris")
 local games = {
     ["Practice"] = 8206123457,
     ["Noob Servers"] = 8204899140,
