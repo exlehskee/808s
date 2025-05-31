@@ -160,7 +160,7 @@ local activeNotifs = {}
 local images = {
     FF2Logo = "rbxassetid://133212065103273",
     Teleport = "rbxassetid://10734949856",
-    Celaris = "rbxassetid://97763532226384",
+    Celaris = "rbxassetid://122065646433936",
     Update = "rbxassetid://10709790387",
     Settings = "rbxassetid://10734950309",
     Warning = "rbxassetid://10709752996",  -- Example new image type
@@ -265,10 +265,11 @@ local Settings = {
     Magnets = false,
     ShowHitbox = false,
     Range = 10,
+    MagnetType = "Normal", -- Blatant, Normal, Legit
 
     -- Visualie best jump spot
     visualizeJumpSpot = false,
-    LandingSpotColor = Color3.fromRGB(0, 255, 4),
+    LandingSpotColor = Color3.fromRGB(0, 255, 113),
 
     removeBallTrail = false,
 
@@ -277,7 +278,7 @@ local Settings = {
     catchDelay = 0.01,
     maxAutoCatchDistance = 10,
 
-    TrajectoryColor = Color3.fromRGB(255, 255, 255),
+    TrajectoryColor = Color3.fromRGB(0, 255, 113),
 
     -- Auto Swat
     autoSwatEnabled = false,
@@ -311,13 +312,8 @@ local Settings = {
     originalMaterials = {},
     stadiumOriginalCFrame = nil,
     ballTrailEnabled = false,
-
-    -- Magnet Delay
-    UseMagnetDelay = false,
-    MagnetDelay = 0.01,
-
     -- Hitbox
-    HitboxColor = Color3.fromRGB(178, 178, 178),
+    HitboxColor = Color3.fromRGB(0, 255, 113),
     HitboxTransparency = 0.5,
 
     -- Block Reach
@@ -366,8 +362,7 @@ local Settings = {
 
     kickOn = false,
     kickerMode = "Perfect",
-    kickType = "Normal",
-    KickerTrajectoryColor = Color3.fromRGB(255, 255, 255)
+    kickType = "Normal"
 }
 
 
@@ -812,6 +807,40 @@ local function pullVectorLogic()
 end
 
 -- Catching Tab
+
+local function updateMagnetRange(newRange)
+    Settings.Range = newRange
+    for _, v in workspace:GetChildren() do
+        if v.Name == "Football" and v:IsA("BasePart") then
+            local sphere = v:FindFirstChild("RangeSphere")
+            if sphere then
+                sphere.Size = Vector3.new(newRange, newRange, newRange)
+            end
+        end
+    end
+end
+
+local function handleMagnetTypeChange(magnetType)
+    Settings.MagnetType = magnetType
+    local newRange = 5
+
+    if magnetType == "Blatant" then
+        newRange = 20
+    elseif magnetType == "Normal" then
+        newRange = 12
+    elseif magnetType == "Legit" then
+        newRange = 5
+    end
+
+    updateMagnetRange(newRange)
+
+    if magnetType then
+        showNotification("Magnet Type:", "Status: " .. magnetType, 2, "Update")
+    else
+        showNotification("Magnet Type:", "Status: Not Identified", 3, "Error")
+    end
+end
+
 CatchingTab:Toggle("Ball Magnets", false, function(value)
     Settings.Magnets = value
     if value == true then
@@ -855,27 +884,8 @@ CatchingTab:Toggle("Show Hitbox", false, function(value)
     end
 end)
 
-CatchingTab:Toggle("Magnet Delay", false, function(v)
-    Settings.MagnetDelay = v
-    if value == true then
-        showNotification("Magnet Delay", "Status: Enabled", 2, "Update")
-    else
-        showNotification("Magnet Delay", "Status: Disabled", 2, "Warning")
-    end
-end)
-
-CatchingTab:Textbox("Delay Amount", false, function(v)
-    local num = tonumber(v)
-
-    if num and num >= 0.01 and num <= 1 then
-        Settings.MagnetDelay = num
-
-        -- Success custom notification
-        showNotification("Magnet Delay Updated", "New Delay: " .. num, 3, "Update")
-    else
-        -- Error custom notification
-        showNotification("Invalid Delay", "Enter a number from 0.01 to 1", 3, "Warning")
-    end
+CatchingTab:Dropdown("Magnet Type", {"Blatant", "Normal", "Legit"}, function(value)
+    handleMagnetTypeChange(value)
 end)
 
 CatchingTab:Colorpicker("Hitbox Color", Settings.HitboxColor, function(t)
@@ -1028,6 +1038,18 @@ PlayersTab:Slider("Angle Boost", 5, 10, 6, function(value)
     Settings.angleBoost = value
 end)
 
+PlayersTab:Textbox("Change Jersey Number", false, function(v)
+    LocalPlayer.Character:FindFirstChild("Uniform").Shirt.BackNum.TextLabel.Text = v
+    LocalPlayer.Character:FindFirstChild("Uniform").Shirt.FrontNum.TextLabel.Text = v
+    LocalPlayer.Character:FindFirstChild("Uniform").ShoulderPads.Top.LeftNum.Text = v
+    LocalPlayer.Character:FindFirstChild("Uniform").ShoulderPads.Top.RightNum.Text = v 
+    showNotification("Jersey Num Changed", "New Number: " .. v, 3, "Update")
+end)
+
+PlayersTab:Textbox("Change Jersey Name", false, function(v)
+    LocalPlayer.Character:FindFirstChild("Uniform").ShoulderPads.Back["PlayerName"].Text = v
+    showNotification("Jersey Name Changed", "New Name: " .. v, 3, "Update")
+end)
 
 PlayersTab:Toggle("No Jump Cooldown", false, function(value)
     Settings.noJumpCooldownEnabled = value
@@ -1739,7 +1761,7 @@ task.spawn(function()
                     sphere.Parent = v
                     
                     task.spawn(function()
-                        while sphere.Parent == v and v.Parent == Workspace do
+                        while sphere.Parent == v and v.Parent == workspace do
                             task.wait()
                             sphere.CFrame = v.CFrame
                             if Settings.ShowHitbox == true then
@@ -1751,14 +1773,24 @@ task.spawn(function()
                     end)
                 end
 
-                local distRight = (Character["CatchRight"].Position - sphere.Position).Magnitude
-                local distLeft = (Character["CatchLeft"].Position - sphere.Position).Magnitude
+                local distRight = (Character["CatchRight"].Position - v.Position).Magnitude
+                local distLeft = (Character["CatchLeft"].Position - v.Position).Magnitude
 
                 if distRight <= Settings.Range or distLeft <= Settings.Range then
                     task.spawn(function()
-                        if Settings.UseMagnetDelay then
-                            task.wait(Settings.MagnetDelay)
+                        local delayTime = 0
+                        if Settings.MagnetType == "Normal" then
+                            delayTime = 0.165
+                        elseif Settings.MagnetType == "Legit" then
+                            delayTime = 0.195
+                        elseif Settings.MagnetType == "Blatant" then
+                            delayTime = 0
                         end
+
+                        if delayTime > 0 then
+                            task.wait(delayTime)
+                        end
+                        
                         firetouchinterest(Character["CatchRight"], v, 0)
                         firetouchinterest(Character["CatchLeft"], v, 0)
                         firetouchinterest(Character["CatchRight"], v, 1)
@@ -1769,6 +1801,7 @@ task.spawn(function()
         end
     end
 end)
+
 
 workspace.ChildRemoved:Connect(function(child)
     if child.Name == "Football" and child:IsA("BasePart") then
@@ -2002,7 +2035,6 @@ KickerTab:Dropdown("Auto Kicker Type", {"High", "Normal", "Low"}, function(value
         showNotification("Kick Type:", "Status: Not Identified", 3, "Error")
     end
 end)
-
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Settings.keysus then
