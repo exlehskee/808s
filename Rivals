@@ -1,0 +1,488 @@
+-- // Celaris Variables \\ -- 
+
+local allowedPlaces = {
+    [17625359962] = true
+}
+
+if not allowedPlaces[game.PlaceId] then
+    game:GetService("Players").LocalPlayer:Kick("Wrong Game Bitch Nigga Check Supported Games")
+end
+
+getgenv().Celaris = {
+    keysus = Enum.KeyCode.RightControl,
+
+    AimbotEnabled = false,
+    AimbotSmoothness = 4,
+    AimbotPart = "Head", -- Default
+    AimbotKey = Enum.KeyCode.C,
+    AimbotKeyType = "Toggle", -- Default
+    UnlockOnDeath = false,
+
+    NoShotCooldown = false
+}
+
+-- // Main Variables \\ -- 
+
+local Celaris = getgenv().Celaris
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+
+local locked = nil
+local toggleState = false
+local holding = false
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+
+
+local ReplicatedModulesFolder = LocalPlayer.PlayerScripts.Modules.ClientReplicatedClasses
+local ItemModule = require(ReplicatedModulesFolder.ClientFighter.ClientItem)
+local FireInputFunction = ItemModule.Input
+local OriginalInputFunction
+local required = require(game:GetService("ReplicatedStorage").Modules.Utility)
+local oldRaycast = required.Raycast
+
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local PlaceID = game.PlaceId
+local JobID = game.JobId
+local AllIDs = {}
+local currentHour = os.date("!*t").hour
+local success, data = pcall(function()
+    return HttpService:JSONDecode(readfile("NotSameServers.json"))
+end)
+
+if success and type(data) == "table" then
+    AllIDs = data
+else
+    AllIDs = { currentHour }
+    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+end
+
+-- // Notifications \\ -- 
+
+local existing = CoreGui:FindFirstChild("CustomNotifications")
+if existing then
+    existing:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomNotifications"
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = CoreGui
+
+local container = Instance.new("Frame")
+container.Name = "NotificationContainer"
+container.BackgroundTransparency = 1
+container.Size = UDim2.new(1, 0, 1, 0)
+container.Position = UDim2.new(0, 0, 0, 0)
+container.Parent = screenGui
+
+local activeNotifs = {}
+
+local images = {
+    RivalsLogo = "rbxassetid://87199880547580",
+    Teleport = "rbxassetid://10734949856",
+    Celaris = "rbxassetid://94715774275917",
+    Update = "rbxassetid://10709790387",
+    Settings = "rbxassetid://10734950309",
+    Warning = "rbxassetid://10709752996",
+    Error = "rbxassetid://10709753149"
+}
+
+function showNotification(title, text, duration, imageType)
+    duration = duration or 3
+    imageType = imageType or "Celaris"
+
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0, 300, 0, 70)
+    notif.Position = UDim2.new(1, 10, 1, -10)
+    notif.AnchorPoint = Vector2.new(1, 1)
+    notif.BackgroundColor3 = Color3.fromRGB(27, 27, 27)
+    notif.ClipsDescendants = true
+    notif.ZIndex = 10
+    notif.Parent = container
+
+    local corner = Instance.new("UICorner", notif)
+    corner.CornerRadius = UDim.new(0, 11)
+
+    local stroke = Instance.new("UIStroke", notif)
+    stroke.Color = Color3.fromRGB(0, 255, 113)
+    stroke.Thickness = 1
+
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0, 40, 0, 40)
+    icon.Position = UDim2.new(0, 10, 0.5, -20)
+    icon.BackgroundTransparency = 1
+    icon.Image = images[imageType] or images.Update
+    icon.ZIndex = 11
+    icon.Parent = notif
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -60, 0, 20)
+    titleLabel.Position = UDim2.new(0, 60, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 16
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 11
+    titleLabel.Parent = notif
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -60, 0, 20)
+    textLabel.Position = UDim2.new(0, 60, 0, 35)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.Gotham
+    textLabel.Text = text
+    textLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    textLabel.TextSize = 14
+    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.ZIndex = 11
+    textLabel.Parent = notif
+
+    table.insert(activeNotifs, notif)
+
+    for i, n in ipairs(activeNotifs) do
+        local targetY = -10 - ((#activeNotifs - i) * 80)
+        TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(1, -10, 1, targetY)
+        }):Play()
+    end
+
+    task.delay(duration, function()
+        local tweenOut = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, 10, 1, -10)
+        })
+        tweenOut:Play()
+        tweenOut.Completed:Wait()
+        notif:Destroy()
+
+        table.remove(activeNotifs, table.find(activeNotifs, notif))
+
+        for i, n in ipairs(activeNotifs) do
+            local targetY = -10 - ((#activeNotifs - i) * 80)
+            TweenService:Create(n, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+                Position = UDim2.new(1, -10, 1, targetY)
+            }):Play()
+        end
+    end)
+end
+
+
+-- // Loading Screen \\ -- 
+
+loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/808s/refs/heads/main/LoadingScreen")()
+
+wait(1)
+
+local screenGui = CoreGui:FindFirstChild("ScreenGui")
+local main = screenGui.Main
+local executorLabel = main.Executor
+local loadingLabel = main.Loading
+local exc = getexecutorname()
+
+executorLabel.Text = "Executor: " .. exc
+loadingLabel.Font = Enum.Font.GothamBold
+
+wait(7.25)
+
+showNotification("Celaris V2", "Last Update: 5/30/2025", 5, "Celaris")
+showNotification("Rivals", "Welcome Back! " .. game:GetService("Players").LocalPlayer.DisplayName, 5, "RivalsLogo")
+
+-- // UI Libraries \\ -- 
+
+local lib = loadstring(game:HttpGet"https://raw.githubusercontent.com/exlehskee/Celaris/refs/heads/main/CelarisUpdatedUI")()
+local keybind = Celaris.keysus
+local win = lib:Window("Celaris | Rivals", Color3.fromRGB(0, 255, 113))
+local AimbotTab = win:Tab("Aimlock")
+local GunModsTab = win:Tab("Gun Mods")
+local TeleportsTab = win:Tab("Teleports")
+local SettingsTab = win:Tab("Config")
+
+-- // Aimbot Tab \\ -- 
+
+AimbotTab:Toggle("Aimbot", false, function(value)
+    Celaris.AimbotEnabled = value
+    if value == true then
+        showNotification("Aimbot", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Aimbot", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+AimbotTab:Textbox("Aimbot Keybind", false, function(v)
+    if #v == 1 then
+        local success, key = pcall(function()
+            return Enum.KeyCode[v:upper()]
+        end)
+
+        if success and key then
+            Celaris.AimbotKey = key
+            showNotification("Aimbot Key Updated", "New Key: " .. v:upper(), 3, "Update")
+        else
+            showNotification("Invalid Key Input", "Enter a valid single key", 3, "Warning")
+        end
+    else
+        showNotification("Invalid Key Input", "Only enter one key (e.g. C, F, Z)", 3, "Warning")
+    end
+end)
+
+AimbotTab:Dropdown("Keybind Type", {"Toggle", "Hold"}, function(value)
+    Celaris.AimbotKeyType = value
+end)
+
+AimbotTab:Dropdown("Aimbot Part", {"Head", "UpperTorso", "HumanoidRootPart", "LowerTorso", "HumanoidRootPart"}, function(value)
+    Celaris.AimbotPart = value
+end)
+
+AimbotTab:Slider("Aimbot Smoothness", 1, 5, 2, function(value)
+    Celaris.AimbotSmoothness = value 
+end)
+
+AimbotTab:Toggle("Unlock On Death", false, function(value)
+    Celaris.UnlockOnDeath = value
+    if value == true then
+        showNotification("Unlock On Death", "Status: Enabled", 2, "Update")
+    else
+        showNotification("Unlock On Death", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+-- // Gun Modifications \\ --
+
+GunModsTab:Toggle("No Shot Cooldown", false, function(value)
+    Celaris.NoShotCooldown = value
+    if value == true then
+        showNotification("No Shot Cooldown", "Status: Enabled", 2, "Update")
+    else
+        showNotification("No Shot Cooldown", "Status: Disabled", 2, "Warning")
+    end
+end)
+
+-- // Teleport Tab \\ -- 
+
+TeleportsTab:Button("Rejoin Server", function()
+    showNotification("Game Teleport", "Destination: Same Server", 3, "Teleport")
+    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId) 
+end)
+
+TeleportsTab:Button("Join A New Server", function()
+    showNotification("Game Teleport", "Joining a new server...", 3, "Teleport")
+    local foundServer = false
+    local cursor = ""
+
+    while not foundServer do
+        local url = "https://games.roblox.com/v1/games/" .. PlaceID .. "/servers/Public?sortOrder=Desc&limit=100"
+        if cursor ~= "" then url = url .. "&cursor=" .. cursor end
+
+        local response = HttpService:JSONDecode(game:HttpGet(url))
+        cursor = response.nextPageCursor or ""
+
+        for _, server in ipairs(response.data) do
+            local id = server.id
+
+            if server.playing >= 5 and server.playing < server.maxPlayers and id ~= JobID then
+                local alreadyJoined = false
+
+                -- Check cache
+                for _, cached in ipairs(AllIDs) do
+                    if tonumber(cached) ~= nil and tonumber(cached) ~= currentHour then
+                        -- Clear file if hour has changed
+                        delfile("NotSameServers.json")
+                        AllIDs = { currentHour }
+                        break
+                    end
+                    if id == cached then
+                        alreadyJoined = true
+                        break
+                    end
+                end
+
+                if not alreadyJoined then
+                    table.insert(AllIDs, id)
+                    writefile("NotSameServers.json", HttpService:JSONEncode(AllIDs))
+                    TeleportService:TeleportToPlaceInstance(PlaceID, id, Players.LocalPlayer)
+                    foundServer = true
+                    break
+                end
+            end
+        end
+
+        if cursor == "" then break end
+    end
+end)
+
+-- // Source \\ -- 
+
+-- Aimbot
+
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Celaris.AimbotKey then
+        if Celaris.AimbotKeyType == "Toggle" then
+            toggleState = not toggleState
+            Celaris.AimbotEnabled = toggleState
+            showNotification("Aimbot", "Status: " .. (toggleState and "Enabled" or "Disabled"), 2, toggleState and "Update" or "Warning")
+        elseif Celaris.AimbotKeyType == "Hold" then
+            holding = true
+        end
+    end
+end)
+
+local function getNearestHeadPosition()
+    local nearestDist = math.huge
+    local nearestPos = nil
+    local mousePos = UserInputService:GetMouseLocation()
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local char = player.Character
+            if char and char:FindFirstChild("Head") then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(char.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+                    if dist < nearestDist then
+                        nearestDist = dist
+                        nearestPos = char.Head.Position
+                    end
+                end
+            end
+        end
+    end
+    return nearestPos
+end
+
+required.Raycast = function(...)
+    local args = {...}
+    if Celaris.SilentAimbotEnabled and typeof(args[3]) == "Vector3" then
+        local nearestHead = getNearestHeadPosition()
+        if nearestHead then
+            args[3] = nearestHead
+        end
+    end
+    return oldRaycast(table.unpack(args))
+end
+
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Celaris.AimbotKey and Celaris.AimbotKeyType == "Hold" then
+        holding = false
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    local active = false
+    if Celaris.AimbotKeyType == "Toggle" then
+        active = toggleState
+    elseif Celaris.AimbotKeyType == "Hold" then
+        active = holding
+    end
+
+    if not Celaris.AimbotEnabled or not active then return end
+
+    if Celaris.UnlockOnDeath and locked and locked.Parent and locked.Parent:FindFirstChild("Humanoid") and locked.Parent.Humanoid.Health <= 0 then
+        showNotification("Aimbot", "Target Eliminated", 2, "Warning")
+        locked = nil
+    end
+
+    local closest, dist = nil, math.huge
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
+            local character = player.Character
+            local part = character:FindFirstChild(Celaris.AimbotPart)
+
+            local aimPosition
+            if Celaris.AimbotPart == "Head" then
+                local hrp = character:FindFirstChild("PhysicalHitboxHead")
+                aimPosition = hrp.Position
+            elseif part then
+                aimPosition = part.Position
+            end
+
+            if aimPosition then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(aimPosition)
+                local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+
+                if onScreen and distance < dist then
+                    closest = aimPosition
+                    dist = distance
+                end
+            end
+        end
+    end
+
+    if closest then
+        local targetPos = Camera:WorldToViewportPoint(closest)
+        local dx = (targetPos.X - Mouse.X) / Celaris.AimbotSmoothness
+        local dy = (targetPos.Y - Mouse.Y) / Celaris.AimbotSmoothness
+        mousemoverel(dx, dy)
+    end
+end)
+
+-- // Gun Modifications Source \\ --
+
+-- No Shot Cooldown
+OriginalInputFunction = hookfunction(FireInputFunction, function(...)
+    local Args = {...}
+    if type(Args[1]) == "table" and Args[1].Info and type(Args[1].Info) == "table" then
+        local Info = Args[1].Info
+
+        if Celaris.NoShotCooldown then
+            Info.ShootCooldown = 0
+        else
+            Info.ShootCooldown = 0.15
+        end
+    end
+    return OriginalInputFunction(table.unpack(Args))
+end)
+
+
+-- // Celaris Keysus
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Celaris.keysus then
+        local ui = CoreGui:FindFirstChild("name")
+        if ui and ui:IsA("ScreenGui") then
+            ui.Enabled = not ui.Enabled
+        end
+    end
+end)
+
+local gang = game:GetService("CoreGui")
+local gangbang = gang:FindFirstChild("name").Main
+local stroke = gangbang:FindFirstChild("UIStroke")
+local corner = gangbang:FindFirstChild("UICorner")
+
+stroke.Color = Color3.fromRGB(0, 255, 113)
+stroke.Thickness = 2
+corner.CornerRadius = UDim.new(0, 12)
+local gg = gang:FindFirstChild("name")
+gg.Main.Size = UDim2.new(0, 560, 0, 340)
+
+SettingsTab:Textbox("UI Keybind", false, function(v)
+    local success, key = pcall(function()
+        return Enum.KeyCode[v]
+    end)
+
+    if success and key then
+        Celaris.keysus = key
+        showNotification("UI Keybind", "Set keybind to: " .. v, 3, "Update")
+    else
+        showNotification("UI Keybind", "Put in a valid keybind!", 3, "Error")
+    end
+end)
