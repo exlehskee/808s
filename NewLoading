@@ -51,7 +51,7 @@ icon.Parent = container
 
 -- Title
 local title = Instance.new("TextLabel")
-title.Text = "Celestial V3"
+title.Text = "Celestial ✧"
 title.Font = Enum.Font.GothamBold
 title.TextSize = 48
 title.TextColor3 = Color3.new(1, 1, 1)
