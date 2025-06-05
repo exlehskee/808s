@@ -42,7 +42,7 @@ layout.Parent = container
 
 -- Icon
 local icon = Instance.new("ImageLabel")
-icon.Image = "rbxthumb://type=Asset&id=123596491677768&w=420&h=420"
+icon.Image = "rbxthumb://type=Asset&id=105198745426019&w=420&h=420"
 icon.BackgroundTransparency = 1
 icon.Size = UDim2.fromOffset(140, 140)
 icon.ImageTransparency = 1
